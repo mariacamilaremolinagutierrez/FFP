@@ -1,4 +1,4 @@
-import math, numpy, argparse, os, time
+import math, numpy, argparse, os
 
 from matplotlib.pyplot import *
 
@@ -30,6 +30,9 @@ def get_planets(m0, a_planets, m_planets, e_planets, phi=0.):
     for i,a_i in enumerate(a_planets):
         #Binary
         star_planet = new_binary_from_orbital_elements(m0, m_planets[i], a_planets[i], e_planets[i], true_anomaly=phi)
+        #Planets attributes
+        star_planet.eccentricity = e_planets[i]
+        star_planet.semimajoraxis = a_planets[i]
         #Center on the star
         star_planet.position -= star_planet[0].position
         star_planet.velocity -= star_planet[0].velocity
@@ -62,9 +65,11 @@ def get_ffp_in_orbit(m0, m_ffp, b, r_inf):
     m0_and_ffp_in_orbit[1].position = (-r_inf,-b,zero_p)
     m0_and_ffp_in_orbit[1].velocity = (get_parabolic_velocity(m0, m_ffp, b, r_inf),zero_v,zero_v)
 
-    # orbital elements
-    # mass1, mass2, semimajor_axis, eccentricity, true_anomaly, inclination, long_asc_node, arg_per = orbital_elements_from_binary(m0_and_ffp_in_orbit)
-    # print "ORBITAL ELEMENTS: ", semimajor_axis, eccentricity, true_anomaly,'\n'
+    m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(m0_and_ffp_in_orbit)
+
+    #For the star it sets the initial values of semimajoraxis and eccentricity of the ffp
+    m0_and_ffp_in_orbit.semimajoraxis = sma
+    m0_and_ffp_in_orbit.eccentricity = e
 
     return m0_and_ffp_in_orbit
 
@@ -112,10 +117,6 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
     y = AdaptingVectorQuantity()
     times = AdaptingVectorQuantity()
 
-    #Order: 12, 23, 31
-    eccentricities = []
-    semimajoraxes = []
-
     Etot_init = gravity.kinetic_energy + gravity.potential_energy
     Etot = Etot_init
     DeltaE_max = 0.0 | nbody_system.energy
@@ -136,15 +137,6 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
         y.append(bodies.y)
         times.append(time)
 
-        for i in range(0,number_of_planets+2):
-            for j in range(i+1,number_of_planets+2):
-
-                binary = [bodies[i], bodies[j]]
-                massA, massB, semimajor_axis, eccentricity, true_anomaly, inclination, long_asc_node, arg_per = orbital_elements_from_binary(binary)
-
-                eccentricities.append(eccentricity)
-                semimajoraxes.append(semimajor_axis.value_in(nbody_system.length))
-
         Etot = gravity.kinetic_energy + gravity.potential_energy
         DeltaE = abs(Etot-Etot_init)
 
@@ -155,7 +147,7 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
 
         time += dt
 
-    print "\nEnergy Change: max(|E_j - E_initial|)/E_initial = ", DeltaE_max/Etot_init
+    print '\nEnergy Change:', DeltaE_max/Etot_init
 
     results = ['flyby', 'temporary capture', 'exchange','nothing']
     #results = [0,1,2,-1]
@@ -180,6 +172,19 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
         res = results[3]
 
     print '\nResult:',res
+
+    #Order: 0_ffp, 0_bp, ffp_bp
+    eccentricities = []
+    semimajoraxes = []
+
+    for i in range(0,number_of_planets+2):
+        for j in range(i+1,number_of_planets+2):
+
+            binary = [bodies[i], bodies[j]]
+            massA, massB, semimajor_axis, eccentricity, true_anomaly, inclination, long_asc_node, arg_per = orbital_elements_from_binary(binary)
+
+            eccentricities.append(eccentricity)
+            semimajoraxes.append(semimajor_axis.value_in(nbody_system.length))
 
     gravity.stop()
 
@@ -210,7 +215,6 @@ def plot_trajectory(x,y,number_of_planets):
         x_planet = x[:,i+2].value_in(nbody_system.length)
         y_planet = y[:,i+2].value_in(nbody_system.length)
 
-        #color_planet = numpy.random.rand(3,1)
         color_planet = colors[i]
 
         plot(x_planet,y_planet,color=color_planet,label='BP',alpha=0.5)
@@ -241,52 +245,15 @@ def plot_energy(times, energies):
 
     f=figure(figsize=(15,15))
 
-    plot(times,energies,color='black')
+    plot(times,numpy.log10(abs(energies)),color='black')
 
     axhline(y=0, xmin=0, xmax=times[-1], c='m', linestyle='--')
 
     title('Total Energy of the System (nbody units)')
     xlabel("$t$", fontsize=20)
-    ylabel("$|\Delta E| / E$", fontsize=20)
+    ylabel("$\log{(|\Delta E / E|)}$", fontsize=20)
 
     savefig('energy.png')
-    close()
-
-def plot_orbital_elements(times,eccentricities,semimajoraxes,number_of_planets):
-
-    nrows = 2
-    ncols = 3
-
-    f = figure(figsize=(35,15))
-    labels = ['Star','FFP', 'BP']
-
-    times = times.value_in(nbody_system.time)
-
-    for i in range(1,4):
-
-        subplot = f.add_subplot(nrows,ncols,i)
-
-        eccs = eccentricities[:,i-1]
-        smas = semimajoraxes[:,i-1]
-
-        subplot.plot(times, eccs, c='black', label='$e_{final} = $'+str(eccs[-1]))
-        subplot.axhline(y=1, xmin=0, xmax=times[-1], c='m')
-
-        subplot.set_title("Eccentricity for: "+labels[i-1], fontsize=20)
-        subplot.set_xlabel("$t$", fontsize=20)
-        subplot.set_ylabel("$e$", fontsize=20)
-        subplot.legend(loc='best', fontsize=20)
-
-        subplot=f.add_subplot(nrows,ncols,i+3)
-
-        subplot.plot(times, smas, c='black', label='$a_{final} = $'+str(smas[-1]))
-
-        subplot.set_title("Semimajor axis for: "+labels[i-1], fontsize=20)
-        subplot.set_xlabel("$t$", fontsize=20)
-        subplot.set_ylabel("$a$", fontsize=20)
-        subplot.legend(loc='best', fontsize=20)
-
-    savefig('orbitalelements.png')
     close()
 
 def convert_units(converter, t_end_p, m0_p, m_ffp_p, m_planets_p, a_planets_p, e_planets_p, n_steps_p, phi_p, b_p):
@@ -331,9 +298,6 @@ def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_plane
     Units: t_end(yr), m0(MSun), m_ffp(MJupiter), m_planets(MJupiter), a_planets(AU), e_planets(None), n_steps(None), phi(degrees), b(AU)
     """
 
-    #Time starts
-    start_time = time.time()
-
     #Converter used in this program
     converter = nbody_system.nbody_to_si(1 | units.MSun,  5 | units.AU)
 
@@ -357,14 +321,15 @@ def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_plane
     print '\nBODIES:\n'
     print bodies
 
+    #stop_code()
+
     #Evolve time
     x,y,times,energies,eccentricities,semimajoraxes = evolve_gravity(bodies,number_of_planets,converter,t_end,n_steps)
 
     plot_trajectory(x,y,number_of_planets)
     plot_energy(times, energies)
-    #plot_orbital_elements(times,eccentricities,semimajoraxes,number_of_planets)
 
-    print '\nTime:', time.time()-start_time, 'seconds.\n'
+    return eccentricities[0],semimajoraxes[0],eccentricities[1],semimajoraxes[1],eccentricities[2],semimajoraxes[2]
 
 if __name__ in ('__main__', '__plot__'):
 
