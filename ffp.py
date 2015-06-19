@@ -2,10 +2,14 @@ import math, numpy, argparse, os
 
 from matplotlib.pyplot import *
 
+from amuse.io import write_set_to_file
+from amuse.io import base
 from amuse.units import units, constants, nbody_system
 from amuse.units.quantities import AdaptingVectorQuantity
 from amuse.datamodel import Particles, ParticlesSuperset
+from amuse.community.ph4.interface import ph4
 from amuse.community.smalln.interface import SmallN
+from amuse.community.huayno.interface import Huayno
 from amuse.community.kepler.interface import Kepler
 from amuse.ext.orbital_elements import orbital_elements_from_binary, new_binary_from_orbital_elements
 
@@ -40,15 +44,20 @@ def get_planets(m0, a_planets, m_planets, e_planets, phi=0.):
 
     return planets
 
-def get_parabolic_velocity(m0, m_ffp, b, r_inf):
+def get_parabolic_velocity(m0, m_ffp, b, r_inf, m_planets, a_planets, phi):
 
-    mu = m0*m_ffp / (m0 + m_ffp)
-    ep_m0_ffp = (1.0 | nbody_system.length**3 * nbody_system.time**-2 * nbody_system.mass**-1)*m0*m_ffp / ((b**2 + r_inf**2).sqrt())
-    parabolic_velocity = (2.*ep_m0_ffp/mu).sqrt()
+    M = m0 + m_ffp + m_planets.sum()
 
-    return parabolic_velocity
+    cm_x = (np.array(m_planets)*np.array(a_planets*math.cos(np.radians(phi)))).sum()/M
+    cm_y = (np.array(m_planets)*np.array(a_planets*math.sin(np.radians(phi)))).sum()/M
 
-def get_ffp_in_orbit(m0, m_ffp, b, r_inf):
+    r = ((r_inf-cm_x)**2+(b-cm_y)**2).sqrt()
+
+    parabolic_velocity_squared = 2.0*(1.0 | nbody_system.length**3 * nbody_system.time**-2 * nbody_system.mass**-1)*M / r
+
+    return parabolic_velocity_squared.sqrt()
+
+def get_ffp_in_orbit(m0, m_ffp, b, r_inf, parabolic_velocity):
 
     m0_and_ffp_in_orbit = Particles(2)
 
@@ -63,13 +72,13 @@ def get_ffp_in_orbit(m0, m_ffp, b, r_inf):
     #Free-floating planet
     m0_and_ffp_in_orbit[1].mass = m_ffp
     m0_and_ffp_in_orbit[1].position = (-r_inf,-b,zero_p)
-    m0_and_ffp_in_orbit[1].velocity = (get_parabolic_velocity(m0, m_ffp, b, r_inf),zero_v,zero_v)
+    m0_and_ffp_in_orbit[1].velocity = (parabolic_velocity,zero_v,zero_v)
 
     m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(m0_and_ffp_in_orbit)
 
     #For the star it sets the initial values of semimajoraxis and eccentricity of the ffp
-    m0_and_ffp_in_orbit.semimajoraxis = sma
     m0_and_ffp_in_orbit.eccentricity = e
+    m0_and_ffp_in_orbit.semimajoraxis = sma
 
     return m0_and_ffp_in_orbit
 
@@ -86,7 +95,6 @@ def energies_binaries(bodies, indexA, indexB):
 
     v_A = particleA.velocity.value_in(nbody_system.speed)
     vsquared_A = sum(v_A*v_A) | nbody_system.speed*nbody_system.speed
-
     v_B = particleB.velocity.value_in(nbody_system.speed)
     vsquared_B = sum(v_B*v_B) | nbody_system.speed*nbody_system.speed
 
@@ -102,7 +110,19 @@ def energies_binaries(bodies, indexA, indexB):
 
     return binary_energy
 
-def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
+def save_particles_to_file(bodies, bodies_to_save, bodies_filename,time):
+    #Add attributes that I'm interested in to the bodies_to_save
+    bodies_to_save.position = bodies.position
+    bodies_to_save.velocity = bodies.velocity
+    bodies_to_save.semimajoraxis = bodies.semimajoraxis
+    bodies_to_save.eccentricity = bodies.eccentricity
+    bodies_to_save.time = time
+
+    write_set_to_file(bodies_to_save, bodies_filename, "hdf5")
+
+def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, bodies_filename):
+
+    bodies_to_save = Particles(number_of_planets+2)
 
     #Positions and velocities centered on the center of mass
     bodies.move_to_center()
@@ -137,6 +157,13 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
         y.append(bodies.y)
         times.append(time)
 
+        #Order: 0_ffp, 0_bp1, 0_bp2, 0_bp3,...
+        for i in range(1,number_of_planets+2):
+            binary = [bodies[0], bodies[i]]
+            m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+            bodies[i].eccentricity = e
+            bodies[i].semimajoraxis = sma
+
         Etot = gravity.kinetic_energy + gravity.potential_energy
         DeltaE = abs(Etot-Etot_init)
 
@@ -145,50 +172,18 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps):
         if ( DeltaE > DeltaE_max ):
             DeltaE_max = DeltaE
 
+        save_particles_to_file(bodies, bodies_to_save, bodies_filename,time)
+
         time += dt
 
-    print '\nEnergy Change:', DeltaE_max/Etot_init
+    # print '\nEnergy Change:', DeltaE_max/Etot_init
 
-    results = ['flyby', 'temporary capture', 'exchange','nothing']
-    #results = [0,1,2,-1]
-
-    planets_star_energies = []
-
-    for i in range(0,number_of_planets):
-        planet_star_energy = energies_binaries(bodies, 0, i+2).value_in(nbody_system.energy)
-        planets_star_energies.append(planet_star_energy)
-
-    planets_star_energy = sum(planets_star_energies)
-    ffp_star_energy = energies_binaries(bodies, 0, 1).value_in(nbody_system.energy)
-
-    if (planets_star_energy<0 and ffp_star_energy>0):
-        res = results[0]
-    elif (planets_star_energy<0 and ffp_star_energy<0):
-        res = results[1]
-    elif (planets_star_energy>0 and ffp_star_energy<0):
-        res = results[2]
-    else:
-        #res = 'something that is not flyby, exchange or temporary capture has happened!'
-        res = results[3]
-
-    print '\nResult:',res
-
-    #Order: 0_ffp, 0_bp, ffp_bp
-    eccentricities = []
-    semimajoraxes = []
-
-    for i in range(0,number_of_planets+2):
-        for j in range(i+1,number_of_planets+2):
-
-            binary = [bodies[i], bodies[j]]
-            massA, massB, semimajor_axis, eccentricity, true_anomaly, inclination, long_asc_node, arg_per = orbital_elements_from_binary(binary)
-
-            eccentricities.append(eccentricity)
-            semimajoraxes.append(semimajor_axis.value_in(nbody_system.length))
+    # print '\n BODIES AT END\n'
+    # print bodies_to_save
 
     gravity.stop()
 
-    return x,y,times,numpy.array(system_energies),numpy.array(eccentricities),numpy.array(semimajoraxes)
+    return x,y,times,numpy.array(system_energies)
 
 def plot_trajectory(x,y,number_of_planets):
 
@@ -292,7 +287,7 @@ def stop_code():
     import sys
     sys.exit()
 
-def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_planets_p=[5.0], e_planets_p=[0.0], n_steps_p=10000, phi_p=0.0, b_p=5.0):
+def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_planets_p=[5.0], e_planets_p=[0.0], n_steps_p=10000, phi_p=0.0, b_p=5.0, iteration_number=1):
 
     """
     Units: t_end(yr), m0(MSun), m_ffp(MJupiter), m_planets(MJupiter), a_planets(AU), e_planets(None), n_steps(None), phi(degrees), b(AU)
@@ -313,23 +308,21 @@ def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_plane
     planets = get_planets(m0,a_planets,m_planets,e_planets,phi)
 
     #Set the parabolic orbit of the ffp around the star
-    star_and_ffp_in_orbit = get_ffp_in_orbit(m0, m_ffp, b, r_inf)
+    star_and_ffp_in_orbit = get_ffp_in_orbit(m0, m_ffp, b, r_inf, get_parabolic_velocity(m0, m_ffp, b, r_inf, m_planets, a_planets, phi))
 
     #Particle superset: star, FFP, planets
     bodies = ParticlesSuperset([star_and_ffp_in_orbit, planets])
 
-    print '\nBODIES:\n'
-    print bodies
+    # print '\nBODIES AT START:\n'
+    # print bodies
 
-    #stop_code()
+    bodies_filename = './particles/'+str(iteration_number)+'.hdf5'
 
     #Evolve time
-    x,y,times,energies,eccentricities,semimajoraxes = evolve_gravity(bodies,number_of_planets,converter,t_end,n_steps)
+    x,y,times,energies = evolve_gravity(bodies,number_of_planets,converter,t_end,n_steps,bodies_filename)
 
-    plot_trajectory(x,y,number_of_planets)
-    plot_energy(times, energies)
-
-    return eccentricities[0],semimajoraxes[0],eccentricities[1],semimajoraxes[1],eccentricities[2],semimajoraxes[2]
+    #plot_trajectory(x,y,number_of_planets)
+    #plot_energy(times, energies)
 
 if __name__ in ('__main__', '__plot__'):
 

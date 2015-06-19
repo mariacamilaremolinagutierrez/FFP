@@ -21,60 +21,47 @@ a_planets = [5.0] #AU
 e_planets = [0.0]
 n_steps = 10000
 
+# def find_upper_b(a): #a is lambda
+#     return math.sqrt(-(-a**6-6*a**5-15*a**4-20*a**3-15*a**2-(a+1)**3*sqrt(a**6+6*a**5+25615*a**4+20*a**3+15*a**2+6*a+1)-6*a-1)/(8*a**4))
+
 #3 parameters
 #earth_mass = 0.0031452 #In MJupiter
 #ms_ffp = np.linspace(earth_mass, 10.0, 10) #MJupiter
 ms_ffp = [1.0] #MJupiter
-#bs = squared_space(-7*5.0, 7*5.0, 10) #AU
-bs = [5.0] #AU
-#phis = np.random.rand(100) #degrees
-phis = [0.0] #degrees
+bs = squared_space(-7*5.0, 7*5.0, 10) #AU
+#bs = [5.0] #AU
+phis = np.random.rand(10) #degrees (this should be 1000 phis)
+#phis = [0.0] #degrees
 
-#Files
-filename_status = 'status.txt'
-filename_results = 'results.txt'
+#File to follow this parameters
+file_parameters = open('/parameters.txt','w')
 
-status=open(filename_status,'a')
-results = open(filename_results,'a')
-
-num_lines = sum(1 for line in open(filename_status))
-
-if(num_lines == 0):
-    status.write('iteration_number\tduration(seconds)\n')
-    results.write('m_ffp\tb\tphi\te_0_ffp\ta_0_ffp\te_0_bp\ta_0_bp\te_ffp_bp\ta_ffp_bp\n')#still don't know what to print here
-    num_lines += 1
-
-#Counter
-i = 1
+i=1
 
 for m_ffp in ms_ffp:
     for b in bs:
         for phi in phis:
+            #Time starts
+            start_time = time.time()
 
-            if (i>=num_lines):
-                #Time starts
-                start_time = time.time()
+            ffp.run_capture(t_end_p=t_end,
+                            m0_p=m0,
+                            m_ffp_p=m_ffp,
+                            m_planets_p=m_planets,
+                            a_planets_p=a_planets,
+                            e_planets_p=e_planets,
+                            n_steps_p=n_steps,
+                            phi_p=phi,
+                            b_p=b,
+                            iteration_number=i)
 
-                e_0_ffp,a_0_ffp,e_0_bp,a_0_bp,e_ffp_bp,a_ffp_bp = ffp.run_capture(t_end_p=t_end,
-                                                                                    m0_p=m0,
-                                                                                    m_ffp_p=m_ffp,
-                                                                                    m_planets_p=m_planets,
-                                                                                    a_planets_p=a_planets,
-                                                                                    e_planets_p=e_planets,
-                                                                                    n_steps_p=n_steps,
-                                                                                    phi_p=phi,
-                                                                                    b_p=b)
+            #Time stops
+            duration = time.time()-start_time
 
-                #Time stops
-                duration = time.time()-start_time
-
-                #Write status and results
-                status.write(('%d\t%.4f\n')%(i,duration))
-                results.write(('%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n')%(m_ffp,b,phi,e_0_ffp,a_0_ffp,e_0_bp,a_0_bp,e_ffp_bp,a_ffp_bp))
+            #Write in File (iteration, mass of ffp, impact parameter, phi, duration)
+            file_parameters.write(('%d\t%.4f\t%.4f\t%.4f\t%.4f\n')%(i,m_ffp,b,phi,duration))
 
             #Advance counter
             i += 1
 
-#Closing files
-status.close()
-results.close()
+file_parameters.close()
