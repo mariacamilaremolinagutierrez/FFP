@@ -304,8 +304,8 @@ def run_capture(t_end_p=650.0, m0_p=1.0, m_ffp_p=1.0, m_planets_p=[1.0], a_plane
     #Evolve time
     x,y,times,energies,max_energy_change = evolve_gravity(bodies,number_of_planets,converter,t_end,n_steps,n_snapshots_p,bodies_filename)
 
-    plot_trajectory(x,y,number_of_planets)
-    plot_energy(times, energies)
+    #plot_trajectory(x,y,number_of_planets)
+    #plot_energy(times, energies)
 
     return max_energy_change
 

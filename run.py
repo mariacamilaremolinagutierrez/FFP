@@ -43,13 +43,13 @@ if __name__ in ('__main__', '__plot__'):
     n_steps = 10000
     n_snapshots = int(n_steps/20.0)
 
-    #earth_mass = 0.0031452 #In MJupiter
-    #ms_ffp = np.linspace(earth_mass, 10.0, 10) #MJupiter
-    ms_ffp = [1.0] #MJupiter
+    earth_mass = 0.0031452 #In MJupiter
+    ms_ffp = np.linspace(earth_mass, 10.0, 10) #MJupiter
+    #ms_ffp = [1.0] #MJupiter
 
-    #np.random.seed(12)
-    #phis = np.random.rand(10) #degrees (this should be 1000 phis)
-    phis = [0.0] #degrees
+    np.random.seed(12)
+    phis = np.random.rand(50) #degrees (this should be 1000 phis)
+    #phis = [0.0] #degrees
 
     #File to follow this parameters
     file_parameters = open('./parameters.txt','w')
@@ -57,10 +57,10 @@ if __name__ in ('__main__', '__plot__'):
     i=1
 
     for m_ffp in ms_ffp:
-        #mass_ratio = m_ffp/m_planets[-1]
-        #b_limit = find_limit_b(mass_ratio)
-        #bs = squared_space(-b_limit, b_limit, 10) #AU
-        bs = [5.0] #AU
+        mass_ratio = m_ffp/m_planets[-1]
+        b_limit = find_limit_b(mass_ratio)
+        bs = squared_space(-b_limit, b_limit, 10) #AU
+        #bs = [5.0] #AU
         for b in bs:
             for phi in phis:
                 #Time starts
