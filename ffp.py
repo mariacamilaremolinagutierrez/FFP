@@ -158,11 +158,11 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, bodies_
         times.append(time)
 
         #Order: 0_ffp, 0_bp1, 0_bp2, 0_bp3,...
-        for i in range(1,number_of_planets+2):
-            binary = [bodies[0], bodies[i]]
+        for j in range(1,number_of_planets+2):
+            binary = [bodies[0], bodies[j]]
             m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
-            bodies[i].eccentricity = e
-            bodies[i].semimajoraxis = sma
+            bodies[j].eccentricity = e
+            bodies[j].semimajoraxis = sma
 
         Etot = gravity.kinetic_energy + gravity.potential_energy
         DeltaE = abs(Etot-Etot_init)

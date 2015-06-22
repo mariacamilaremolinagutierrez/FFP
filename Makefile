@@ -2,6 +2,7 @@ all: run.py
 	amuse run.py
 
 clean:
-	rm status.txt
-	rm results.txt
-	rm *.png
+	rm particles/*.hdf5
+	rm trajectory.png
+	rm trajectory_zoom.png
+	rm energy.png

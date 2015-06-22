@@ -6,9 +6,9 @@ def squared_space(b_initial, b_final, n_bs):
     if (b_initial<0.0): #assuming b_initial = b_final
         ss_half = np.sqrt(np.linspace(0.0,b_final**2,int(n_bs/2)))
         if(n_bs%2 == 0):
-            ss = np.append(-1.0*ss_half,ss_half)
+            ss = np.append(-1.0*ss_half[::-1],ss_half)
         else:
-            ss = np.append(-1.0*ss_half,zeros(1),ss_half)
+            ss = np.append(-1.0*ss_half[::-1],zeros(1),ss_half)
     else:
         ss = np.sqrt(np.linspace(b_initial**2,b_final**2,n_bs))
     return ss
@@ -34,7 +34,7 @@ phis = np.random.rand(10) #degrees (this should be 1000 phis)
 #phis = [0.0] #degrees
 
 #File to follow this parameters
-file_parameters = open('/parameters.txt','w')
+file_parameters = open('./parameters.txt','w')
 
 i=1
 
