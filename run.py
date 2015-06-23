@@ -51,8 +51,15 @@ if __name__ in ('__main__', '__plot__'):
     phis = np.random.rand(50) #degrees (this should be 1000 phis)
     #phis = [0.0] #degrees
 
-    #File to follow this parameters
-    file_parameters = open('./parameters.txt','w')
+    #Counting the lines
+    try:
+        par = open('./parameters.txt','r')
+        num_runs = sum(1 for line in par)
+        par.close()
+        file_parameters = open('./parameters.txt','a')
+    except:
+        num_runs = 0
+        file_parameters = open('./parameters.txt','w')
 
     i=1
 
@@ -63,26 +70,28 @@ if __name__ in ('__main__', '__plot__'):
         #bs = [5.0] #AU
         for b in bs:
             for phi in phis:
-                #Time starts
-                start_time = time.time()
+                #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
+                if (i>num_runs):
+                    #Time starts
+                    start_time = time.time()
 
-                max_energy_change = ffp.run_capture(t_end_p=t_end,
-                                                    m0_p=m0,
-                                                    m_ffp_p=m_ffp,
-                                                    m_planets_p=m_planets,
-                                                    a_planets_p=a_planets,
-                                                    e_planets_p=e_planets,
-                                                    n_steps_p=n_steps,
-                                                    phi_p=phi,
-                                                    b_p=b,
-                                                    iteration_number=i,
-                                                    n_snapshots_p=n_snapshots)
+                    max_energy_change = ffp.run_capture(t_end_p=t_end,
+                                                        m0_p=m0,
+                                                        m_ffp_p=m_ffp,
+                                                        m_planets_p=m_planets,
+                                                        a_planets_p=a_planets,
+                                                        e_planets_p=e_planets,
+                                                        n_steps_p=n_steps,
+                                                        phi_p=phi,
+                                                        b_p=b,
+                                                        iteration_number=i,
+                                                        n_snapshots_p=n_snapshots)
 
-                #Time stops
-                duration = time.time()-start_time
+                    #Time stops
+                    duration = time.time()-start_time
 
-                #Write in File (iteration, mass of ffp, impact parameter, phi, duration)
-                file_parameters.write(('%d\t%.4f\t%.4f\t%.4f\t%.4f\t%.9f\n')%(i,m_ffp,b,phi,duration,max_energy_change))
+                    #Write in File (iteration, mass of ffp, impact parameter, phi, duration)
+                    file_parameters.write(('%d\t%.4f\t%.4f\t%.4f\t%.4f\t%.4e\n')%(i,m_ffp,b,phi,duration,max_energy_change))
 
                 #Advance counter
                 i += 1
