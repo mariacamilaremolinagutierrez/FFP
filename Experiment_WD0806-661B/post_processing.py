@@ -41,12 +41,51 @@ def find_closest_approach(b_ffp, a_bp_initial):
 
     return (b_ffp**2)/math.sqrt(b_ffp**2 + 1600*a_bp_initial)
 
+def is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values):
+
+    mass_ratio = m_ffp/m_bp
+
+    #inequality: closest_approach >= a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
+    right_side = a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
+
+    if(closest_approach >= right_side):
+        return True
+    else:
+        return False
+
+#def is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values):
+def is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values, snapshot):
+
+    masses = [m0, m_ffp, m_bp]
+    inner_index = np.argmin(a_values[1:]) + 1
+    outer_index = np.argmax(a_values[1:]) + 1
+
+    a_in = a_values[inner_index]
+    mu_in = masses[inner_index]/masses[0]
+    e_in = e_values[inner_index]
+
+    a_out = a_values[outer_index]
+    mu_out = masses[outer_index]/masses[0]
+    e_out = e_values[outer_index]
+
+    #inequality: (a_out*(1-e_out))/(a_in*(1+e_in)) > 2.4*((max(mu_in, mu_out))**(1.0/3.0))*((a_out/a_in)**(1.0/2.0)) + 1.15
+    left_side = (a_out*(1-e_out))/(a_in*(1+e_in))
+    right_side = 2.4*((max(mu_in, mu_out))**(1.0/3.0))*((a_out/a_in)**(1.0/2.0))+1.15
+
+    plt.scatter(snapshot,left_side,c='r',s=3, linewidth='0')
+    plt.scatter(snapshot,right_side,c='g',s=3, linewidth='0')
+
+    if(left_side > right_side):
+        return True
+    else:
+        return False
+
 
 def plot_trajectory(x,y,number_of_planets, fname):
 
     colors = ['magenta', 'green', 'DarkOrange', 'red']
 
-    f=plt.figure(figsize=(35,15))
+    f=plt.figure(figsize=(70,30))
 
     x_star = x[:,0]
     x_ffp = x[:,1]
@@ -58,7 +97,7 @@ def plot_trajectory(x,y,number_of_planets, fname):
     plt.scatter(x_star[0],y_star[0],c='black',marker='*')
     plt.scatter(x_star[-1],y_star[-1],c='y',marker='*')
 
-    plt.plot(x_ffp,y_ffp,'c',label='FFP')
+    plt.plot(x_ffp,y_ffp,'c',label='FFP', lw = 2)
     plt.scatter(x_ffp[0],y_ffp[0],c='black')
     plt.scatter(x_ffp[-1],y_ffp[-1],c='c')
 
@@ -76,17 +115,11 @@ def plot_trajectory(x,y,number_of_planets, fname):
     plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
     plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
 
-    plt.title('Trajectory FFP (nbody units)')
-    plt.xlabel("$x$", fontsize=20)
-    plt.ylabel("$y$", fontsize=20)
-    plt.legend()
-
+    plt.title('Trajectory FFP (nbody units)', fontsize=40)
+    plt.xlabel("$x$", fontsize=40)
+    plt.ylabel("$y$", fontsize=40)
+    plt.legend(fontsize=40)
     plt.savefig(fname)
-
-    plt.xlim(-3.1,1.1)
-    plt.ylim(-1,1)
-
-    plt.savefig(fname+'_zoom.png')
     plt.close()
 
 
@@ -110,18 +143,18 @@ if __name__ in ('__main__', '__plot__'):
         m_bp = ms_bp[i]
         b_ffp = bs_ffp[i]
 
-        mass_ratio = m_ffp/m_bp
-
         bodies = io.read_set_from_file('./particles/'+folder+'/'+filename, 'hdf5')
         snapshot = 1
 
-        fig = plt.figure()
-
         #0 if stable 1 if not
-        stability = []
+        hill_stability = []
+        petrovich_stability = []
+
         times = []
         xs = []
         ys = []
+
+        fig = plt.figure()
 
         for data in bodies.history:
 
@@ -138,13 +171,16 @@ if __name__ in ('__main__', '__plot__'):
             if (snapshot == 1):
                 closest_approach = find_closest_approach(b_ffp, a_values[2])
 
-            #inequality: closest_approach >= a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
-            right_side = a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
-
-            if(closest_approach >= right_side):
-                stability.append(0)
+            if(is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values)):
+                hill_stability.append(0)
             else:
-                stability.append(1)
+                hill_stability.append(1)
+
+            #if(is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values)):
+            if(is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values, snapshot)):
+                petrovich_stability.append(0)
+            else:
+                petrovich_stability.append(1)
 
             times.append(t_value)
             xs.append(x_values)
@@ -152,10 +188,21 @@ if __name__ in ('__main__', '__plot__'):
 
             snapshot += 1
 
-        plt.scatter(times, stability)
-        plt.ylim(-0.5,1.5)
-        plt.savefig('./tests/test_stability'+str(i)+'.png')
+        plt.savefig('./tests/petrovich'+str(i)+'.png')
         plt.close()
 
+        if(sum(hill_stability) < snapshot-1):
+            fig = plt.figure()
+            plt.plot(times, hill_stability)
+            plt.ylim(-0.5,1.5)
+            plt.savefig('./tests/hill_stability'+str(i)+'.png')
+            plt.close()
 
-        plot_trajectory(np.array(xs),np.array(ys),1,'./tests/trajectory'+str(i)+'.png')
+        if(sum(petrovich_stability) < snapshot-1):
+            fig = plt.figure()
+            plt.plot(times, petrovich_stability)
+            plt.ylim(-0.5,1.5)
+            plt.savefig('./tests/petrovich_stability'+str(i)+'.png')
+            plt.close()
+
+        plot_trajectory(np.array(xs),np.array(ys),1,'./trajectories/trajectory'+str(i)+'.png')
