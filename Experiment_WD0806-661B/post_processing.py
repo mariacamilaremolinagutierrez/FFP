@@ -27,7 +27,8 @@ def create_parameters_file():
 
     outfile.close()
 
-def read_df():
+def read_parameters_df():
+
     df = pd.read_csv('./parameters.txt', sep='\t')
 
     folders = df['folder']
@@ -36,9 +37,20 @@ def read_df():
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
-    energy_changes = df['energy_change']
 
-    return df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp, energy_changes
+    return df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp
+
+def read_stables_df():
+
+    df = pd.read_csv('./stables.txt', sep='\t')
+
+    filenames = df['filename']
+    ms_bp = df['m_bp']
+    as_bp = df['a_bp']
+    bs_ffp = df['b_ffp']
+    phis_bp = df['phi_bp']
+
+    return df, filenames, ms_bp, as_bp, bs_ffp, phis_bp
 
 def find_closest_approach(b_ffp, a_bp_initial):
 
@@ -50,7 +62,7 @@ def solve_for_x(m0, m_bp, m_ffp):
 
     return solution
 
-def is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values):
+def is_hill_stable(m0, m_ffp, m_bp, a_values, e_values):
 
     M = m0 + m_bp + m_ffp
     mu = m0 + m_bp
@@ -72,97 +84,20 @@ def is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values):
 
     equation = (1+y**2)*(beta**2*y**2 + 2*beta*y + 1) - A*y**2
 
-    # #inequality: closest_approach >= a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
-    # right_side = a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
-
-    #if(closest_approach >= right_side):
     if(equation >= 0.0):
         return True
     else:
         return False
 
-#def is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values):
-def is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values, snapshot):
+def process_stable(stables_file, folder, filename, m_bp, a_bp, b_ffp, phi_bp):
 
-    masses = [m0, m_ffp, m_bp]
-    inner_index = np.argmin(a_values[1:]) + 1
-    outer_index = np.argmax(a_values[1:]) + 1
+    #Add its characteristics to another text
+    stables_file.write(filename+'\t'+str(m_bp)+'\t'+str(a_bp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\n')
 
-    a_in = a_values[inner_index]
-    mu_in = masses[inner_index]/masses[0]
-    e_in = e_values[inner_index]
+    #Copy the file to other folder
+    os.system('cp particles/'+folder+'/'+filename+' stables/'+filename)
 
-    a_out = a_values[outer_index]
-    mu_out = masses[outer_index]/masses[0]
-    e_out = e_values[outer_index]
-
-    #inequality: (a_out*(1-e_out))/(a_in*(1+e_in)) > 2.4*((max(mu_in, mu_out))**(1.0/3.0))*((a_out/a_in)**(1.0/2.0)) + 1.15
-    left_side = (a_out*(1-e_out))/(a_in*(1+e_in))
-    right_side = 2.4*((max(mu_in, mu_out))**(1.0/3.0))*((a_out/a_in)**(1.0/2.0))+1.15
-
-    # if (math.isnan(right_side)):
-    #     print a_values
-    #     print e_values
-    #     print mu_in
-    #     print mu_out
-    #     print a_out
-    #     print a_in
-    #     print e_out
-    #     print e_in
-
-    plt.scatter(snapshot,a_in,c='r',s=3, linewidth='0')
-    #plt.scatter(snapshot,a_out,c='g',s=3, linewidth='0')
-
-    if(left_side > right_side):
-        return True
-    else:
-        return False
-
-
-def plot_trajectory(x,y,number_of_planets, fname):
-
-    colors = ['magenta', 'green', 'DarkOrange', 'red']
-
-    f=plt.figure(figsize=(70,30))
-
-    x_star = x[:,0]-x[:,0]
-    x_ffp = x[:,1]-x[:,0]
-
-    y_star = y[:,0]-y[:,0]
-    y_ffp = y[:,1]-y[:,0]
-
-    plt.plot(x_star,y_star,'y',label='Star')
-    plt.scatter(x_star[0],y_star[0],c='black',marker='*')
-    plt.scatter(x_star[-1],y_star[-1],c='y',marker='*')
-
-    plt.plot(x_ffp,y_ffp,'c',label='FFP', lw = 2)
-    plt.scatter(x_ffp[0],y_ffp[0],c='black')
-    plt.scatter(x_ffp[-1],y_ffp[-1],c='c')
-
-    for i in range(0, number_of_planets):
-
-        x_planet = x[:,i+2]-x[:,0]
-        y_planet = y[:,i+2]-y[:,0]
-
-        color_planet = colors[i]
-
-        plt.plot(x_planet,y_planet,color=color_planet,label='BP',alpha=0.5)
-        plt.scatter(x_planet[0],y_planet[0],c='black')
-        plt.scatter(x_planet[-1],y_planet[-1],color=color_planet)
-
-    plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
-    plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
-
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.title('Trajectory FFP (nbody units)', fontsize=40)
-    plt.xlabel("$x$", fontsize=40)
-    plt.ylabel("$y$", fontsize=40)
-    plt.legend(fontsize=40)
-    plt.savefig(fname)
-    plt.close()
-
-
-if __name__ in ('__main__', '__plot__'):
+def extract_stables():
 
     #Create file with all the runs made per line
     create_parameters_file()
@@ -171,29 +106,55 @@ if __name__ in ('__main__', '__plot__'):
     m0 = 0.58 #MSun
     m_ffp = 7.5 #MJupiter
 
-    df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp, energy_changes = read_df()
+    #Number of snapshots
+    n_snapshots = 500
+
+    df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_parameters_df()
 
     num_files = len(filenames)
+
+    #To record the stables
+    stables_file = open('./stables.txt','w')
+    stables_file.write('filename\tm_bp\ta_bp\tb_ffp\tphi_bp\n')
 
     for i in range(num_files):
 
         folder = folders[i]
         filename = filenames[i]
         m_bp = ms_bp[i]
+        a_bp = as_bp[i]
         b_ffp = bs_ffp[i]
+        phi_bp = phis_bp[i]
 
         bodies = io.read_set_from_file('./particles/'+folder+'/'+filename, 'hdf5')
-        snapshot = 1
 
-        #0 if stable 1 if not
-        hill_stability = []
-        petrovich_stability = []
+        #Order: star - ffp - bp
+        e_values = bodies.eccentricity
+        a_values = bodies.semimajoraxis.value_in(units.AU)
 
-        times = []
-        xs = []
-        ys = []
+        if(is_hill_stable(m0, m_ffp, m_bp, a_values, e_values)):
+            process_stable(stables_file, folder, filename, m_bp, a_bp, b_ffp, phi_bp)
 
-        fig = plt.figure()
+    stables_file.close()
+
+
+if __name__ in ('__main__', '__plot__'):
+
+    extract_stables()
+
+    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+
+    num_files = len(filenames)
+
+    for i in range(num_files):
+
+        filename = filenames[i]
+        m_bp = ms_bp[i]
+        a_bp = as_bp[i]
+        b_ffp = bs_ffp[i]
+        phi_bp = phis_bp[i]
+
+        bodies = io.read_set_from_file('./stables/'+filename, 'hdf5')
 
         for data in bodies.history:
 
@@ -206,45 +167,3 @@ if __name__ in ('__main__', '__plot__'):
             y_values = data.y.value_in(units.AU)
 
             t_value = data.time.value_in(units.yr)[0]
-
-            if (snapshot == 1):
-                closest_approach = find_closest_approach(b_ffp, a_values[2])
-
-            if(is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values)):
-                hill_stability.append(0)
-            else:
-                hill_stability.append(1)
-
-            #if(is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values)):
-            if(is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values, snapshot)):
-                petrovich_stability.append(0)
-            else:
-                petrovich_stability.append(1)
-
-            times.append(t_value)
-            xs.append(x_values)
-            ys.append(y_values)
-
-            snapshot += 1
-
-        plt.savefig('./tests/petrovich'+str(i)+'.png')
-        plt.close()
-
-        if(sum(hill_stability) < snapshot-1):
-            fig = plt.figure()
-            plt.plot(times, hill_stability)
-            plt.ylim(-0.5,1.5)
-            plt.savefig('./tests/hill_stability'+str(i)+'.png')
-            plt.close()
-
-        if(sum(petrovich_stability) < snapshot-1):
-            fig = plt.figure()
-            plt.plot(times, petrovich_stability)
-            plt.ylim(-0.5,1.5)
-            plt.savefig('./tests/petrovich_stability'+str(i)+'.png')
-            plt.close()
-
-        plot_trajectory(np.array(xs),np.array(ys),1,'./trajectories/trajectory'+str(i)+'.png')
-
-        if (i==0):
-            break
