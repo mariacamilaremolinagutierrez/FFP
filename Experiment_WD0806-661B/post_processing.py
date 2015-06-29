@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sympy.solvers import solve
+from sympy import Symbol
+
 from amuse.support import io
 from amuse.units import units
 
@@ -41,14 +44,39 @@ def find_closest_approach(b_ffp, a_bp_initial):
 
     return (b_ffp**2)/math.sqrt(b_ffp**2 + 1600*a_bp_initial)
 
+def solve_for_x(m0, m_bp, m_ffp):
+    x = Symbol('x')
+    solution = solve((m_bp+m_ffp)*x**5 + (2*m_bp+3*m_ffp)*x**4 + (m_bp+3*m_ffp)*x**3 - (m_bp+3*m0)*x**2 - (3*m0+2*m_bp)*x - (m0+m_bp), x)
+
+    return solution
+
 def is_hill_stable(m_ffp, m_bp, closest_approach, a_values, e_values):
 
-    mass_ratio = m_ffp/m_bp
+    M = m0 + m_bp + m_ffp
+    mu = m0 + m_bp
 
-    #inequality: closest_approach >= a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
-    right_side = a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
+    a_1 = a_values[2]
+    a_2 = a_values[1]
 
-    if(closest_approach >= right_side):
+    e_1 = e_values[2]
+    e_2 = e_values[1]
+
+    x = solve_for_x(m0, m_bp, m_ffp)[0]
+
+    f_x = m0*m_bp + (m0*m_ffp)/(1+x) + (m_bp*m_ffp)/(x)
+    g_x = m_bp*m_ffp + m0*m_ffp*(1+x)**2 + m0*m_bp*(x**2)
+
+    A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
+    beta = (m0*m_bp/m_ffp)**(3.0/2.0)*(M/(mu**4))**(1.0/2.0)*((1-e_1**2)/(1-e_2**2))**(1.0/2.0)
+    y = ((a_1*m_ffp*mu)/(a_2*m0*m_bp))**(1.0/2.0)
+
+    equation = (1+y**2)*(beta**2*y**2 + 2*beta*y + 1) - A*y**2
+
+    # #inequality: closest_approach >= a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
+    # right_side = a_values[2]*((1+mass_ratio)**(3.0/2.0)-(1-e_values[2]**2)**(1.0/2.0))**2.0/(2.0*mass_ratio**2.0)
+
+    #if(closest_approach >= right_side):
+    if(equation >= 0.0):
         return True
     else:
         return False
@@ -72,8 +100,18 @@ def is_petrovich_stable(m0, m_ffp, m_bp, a_values, e_values, snapshot):
     left_side = (a_out*(1-e_out))/(a_in*(1+e_in))
     right_side = 2.4*((max(mu_in, mu_out))**(1.0/3.0))*((a_out/a_in)**(1.0/2.0))+1.15
 
-    plt.scatter(snapshot,left_side,c='r',s=3, linewidth='0')
-    plt.scatter(snapshot,right_side,c='g',s=3, linewidth='0')
+    # if (math.isnan(right_side)):
+    #     print a_values
+    #     print e_values
+    #     print mu_in
+    #     print mu_out
+    #     print a_out
+    #     print a_in
+    #     print e_out
+    #     print e_in
+
+    plt.scatter(snapshot,a_in,c='r',s=3, linewidth='0')
+    #plt.scatter(snapshot,a_out,c='g',s=3, linewidth='0')
 
     if(left_side > right_side):
         return True
@@ -87,11 +125,11 @@ def plot_trajectory(x,y,number_of_planets, fname):
 
     f=plt.figure(figsize=(70,30))
 
-    x_star = x[:,0]
-    x_ffp = x[:,1]
+    x_star = x[:,0]-x[:,0]
+    x_ffp = x[:,1]-x[:,0]
 
-    y_star = y[:,0]
-    y_ffp = y[:,1]
+    y_star = y[:,0]-y[:,0]
+    y_ffp = y[:,1]-y[:,0]
 
     plt.plot(x_star,y_star,'y',label='Star')
     plt.scatter(x_star[0],y_star[0],c='black',marker='*')
@@ -103,8 +141,8 @@ def plot_trajectory(x,y,number_of_planets, fname):
 
     for i in range(0, number_of_planets):
 
-        x_planet = x[:,i+2]
-        y_planet = y[:,i+2]
+        x_planet = x[:,i+2]-x[:,0]
+        y_planet = y[:,i+2]-y[:,0]
 
         color_planet = colors[i]
 
@@ -115,6 +153,7 @@ def plot_trajectory(x,y,number_of_planets, fname):
     plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
     plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
 
+    plt.axes().set_aspect('equal', 'datalim')
     plt.title('Trajectory FFP (nbody units)', fontsize=40)
     plt.xlabel("$x$", fontsize=40)
     plt.ylabel("$y$", fontsize=40)
@@ -206,3 +245,6 @@ if __name__ in ('__main__', '__plot__'):
             plt.close()
 
         plot_trajectory(np.array(xs),np.array(ys),1,'./trajectories/trajectory'+str(i)+'.png')
+
+        if (i==0):
+            break
