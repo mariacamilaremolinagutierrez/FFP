@@ -8,7 +8,8 @@ from sympy import Symbol
 
 from amuse.support import io
 from amuse.units import units
-
+from amuse.datamodel import Particles
+from amuse.ext.orbital_elements import orbital_elements_from_binary
 
 def create_parameters_file():
 
@@ -57,6 +58,7 @@ def find_closest_approach(b_ffp, a_bp_initial):
     return (b_ffp**2)/math.sqrt(b_ffp**2 + 1600*a_bp_initial)
 
 def solve_for_x(m0, m_bp, m_ffp):
+
     x = Symbol('x')
     solution = solve((m_bp+m_ffp)*x**5 + (2*m_bp+3*m_ffp)*x**4 + (m_bp+3*m_ffp)*x**3 - (m_bp+3*m0)*x**2 - (3*m0+2*m_bp)*x - (m0+m_bp), x)
 
@@ -132,6 +134,28 @@ def extract_stables():
         e_values = bodies.eccentricity
         a_values = bodies.semimajoraxis.value_in(units.AU)
 
+        star = bodies[0]
+        ffp = bodies[1]
+        bp = bodies[2]
+
+        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
+        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
+        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
+        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+
+        star_bp = Particles(1)
+        star_bp.mass = star.mass + bp.mass
+        star_bp.position = [cm_x, cm_y, 0.0 | units.AU]
+        star_bp.velocity = [cm_vx, cm_vy, 0.0 | units.kms]
+
+        binary = [star_bp, ffp]
+        m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+
+        print m0, m_bp, m_ffp
+        print m1, m2
+
+        break
+
         if(is_hill_stable(m0, m_ffp, m_bp, a_values, e_values)):
             process_stable(stables_file, folder, filename, m_bp, a_bp, b_ffp, phi_bp)
 
@@ -142,28 +166,28 @@ if __name__ in ('__main__', '__plot__'):
 
     extract_stables()
 
-    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
-
-    num_files = len(filenames)
-
-    for i in range(num_files):
-
-        filename = filenames[i]
-        m_bp = ms_bp[i]
-        a_bp = as_bp[i]
-        b_ffp = bs_ffp[i]
-        phi_bp = phis_bp[i]
-
-        bodies = io.read_set_from_file('./stables/'+filename, 'hdf5')
-
-        for data in bodies.history:
-
-            #Order: star - ffp - bp
-            e_values = data.eccentricity
-            a_values = data.semimajoraxis.value_in(units.AU)
-            vx_values = data.vx.value_in(units.kms)
-            vy_values = data.vy.value_in(units.kms)
-            x_values = data.x.value_in(units.AU)
-            y_values = data.y.value_in(units.AU)
-
-            t_value = data.time.value_in(units.yr)[0]
+    # df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+    #
+    # num_files = len(filenames)
+    #
+    # for i in range(num_files):
+    #
+    #     filename = filenames[i]
+    #     m_bp = ms_bp[i]
+    #     a_bp = as_bp[i]
+    #     b_ffp = bs_ffp[i]
+    #     phi_bp = phis_bp[i]
+    #
+    #     bodies = io.read_set_from_file('./stables/'+filename, 'hdf5')
+    #
+    #     for data in bodies.history:
+    #
+    #         #Order: star - ffp - bp
+    #         e_values = data.eccentricity
+    #         a_values = data.semimajoraxis.value_in(units.AU)
+    #         vx_values = data.vx.value_in(units.kms)
+    #         vy_values = data.vy.value_in(units.kms)
+    #         x_values = data.x.value_in(units.AU)
+    #         y_values = data.y.value_in(units.AU)
+    #
+    #         t_value = data.time.value_in(units.yr)[0]
