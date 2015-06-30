@@ -16,7 +16,6 @@ def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
     """
     initialize gravity code for bodies
     """
-
     stars_gravity = code()
     stars_gravity.particles.add_particles(bodies)
     stars_gravity.commit_particles()
@@ -106,19 +105,12 @@ def solve_for_x(m0, m_bp, m_ffp):
 
 def is_hill_stable(m_values, a_values, e_values, converter):
 
-    # m0 = converter.to_si(m_values[0]).value_in(units.MJupiter)
-    # m_ffp = converter.to_si(m_values[1]).value_in(units.MJupiter)
-    # m_bp = converter.to_si(m_values[2]).value_in(units.MJupiter)
-
     m0 = m_values[0].value_in(nbody_system.mass)
     m_ffp = m_values[1].value_in(nbody_system.mass)
     m_bp = m_values[2].value_in(nbody_system.mass)
 
     M = m0 + m_bp + m_ffp
     mu = m0 + m_bp
-
-    # a_1 = converter.to_si(a_values[2]).value_in(units.AU)
-    # a_2 = converter.to_si(a_values[1]).value_in(units.AU)
 
     a_1 = a_values[2].value_in(nbody_system.length)
     a_2 =a_values[1].value_in(nbody_system.length)

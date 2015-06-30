@@ -60,7 +60,7 @@ def read_stables_df():
 
     return df, filenames, ms_bp, as_bp, bs_ffp, phis_bp
 
-def plot_trajectory(x,y,path_filename):
+def plot_trajectory(x, y, filename):
 
     f = plt.figure(figsize=(70,30))
 
@@ -93,18 +93,62 @@ def plot_trajectory(x,y,path_filename):
     plt.xlabel('$x$ (AU)', fontsize=40)
     plt.ylabel('$y$ (AU)', fontsize=40)
     plt.legend(fontsize=40)
-    plt.savefig(path_filename)
+    plt.savefig('./plots/trajectories/'+filename+'.png')
 
     plt.close()
 
+def plot_orbital_elements(times, eccs, smas, filename):
+
+    f = plt.figure(figsize=(35,15))
+
+    ecc_starbp_ffp = eccs[:,1]
+    ecc_star_bp = eccs[:,2]
+
+    sma_starbp_ffp = smas[:,1]
+    sma_star_bp = smas[:,2]
+
+    # print type(sma_star_bp)
+    # print np.shape(sma_star_bp)
+    # print sma_star_bp
+
+    #eccentricity
+    subplot = f.add_subplot(1,2,1)
+
+    subplot.plot(times,ecc_starbp_ffp,c='red',label='FFP and Star+BP')
+    subplot.plot(times,ecc_star_bp,c='green',label='BP and Star')
+
+    subplot.set_title('Eccentricity', fontsize=20)
+    subplot.set_xlabel('$t$ (yr)', fontsize=20)
+    subplot.set_ylabel('$e$', fontsize=20)
+    subplot.set_ylim(-0.5,1.5)
+    subplot.legend(fontsize=20)
+
+    #semimajoraxis
+    subplot = f.add_subplot(1,2,2)
+
+    subplot.plot(times,sma_starbp_ffp,c='red',label='FFP and Star+BP')
+    subplot.plot(times,sma_star_bp,c='green',label='BP and Star')
+
+    subplot.set_title('Semimajor Axis', fontsize=20)
+    subplot.set_xlabel('$t$ (yr)', fontsize=20)
+    subplot.set_ylabel('$a$ (AU)', fontsize=20)
+    subplot.legend(fontsize=20)
+
+    plt.savefig('./plots/orbital_elements/'+filename+'.png')
+    plt.close()
+
+def create_plots_folders():
+    os.system('mkdir plots/')
+    os.system('mkdir plots/trajectories')
+    os.system('mkdir plots/orbital_elements')
+
 def make_several_plots():
+
+    create_plots_folders()
 
     #Masses
     m0 = 0.58 #MSun
     m_ffp = 7.5 #MJupiter
-
-    #Number of snapshots
-    n_snapshots = 500
 
     df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
@@ -143,11 +187,8 @@ def make_several_plots():
             ys.append(y_values)
             times.append(t_value)
 
-        plot_trajectory(np.array(xs),np.array(ys),'./trajectories/'+filename+'.png')
-
-        # if (i==0):
-        #     break
-
+        plot_trajectory(np.array(xs), np.array(ys), filename)
+        plot_orbital_elements(np.array(times), np.array(eccs), np.array(smas), filename)
 
 if __name__ in ('__main__', '__plot__'):
 
@@ -157,4 +198,7 @@ if __name__ in ('__main__', '__plot__'):
     #Move all the stables to another folder
     create_stables_folder()
 
+    #Make individual plots
     make_several_plots()
+
+    
