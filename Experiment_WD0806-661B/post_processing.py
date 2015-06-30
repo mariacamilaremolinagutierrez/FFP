@@ -11,7 +11,7 @@ from amuse.units import units
 from amuse.datamodel import Particles
 from amuse.ext.orbital_elements import orbital_elements_from_binary
 
-def create_parameters_file():
+def create_parameters_and_status_file():
 
     masses_directories = os.listdir('./particles/')
 
@@ -25,21 +25,28 @@ def create_parameters_file():
                     outfile.write(mass_dir+'\t')
                     outfile.write(line)
             infile.close()
-
     outfile.close()
 
-def read_parameters_df():
+    with open('./stables.txt', 'w') as outfile:
+        outfile.write('filename\tm_bp\ta_bp\tb_ffp\tphi_bp\trun_time\tenergy_change\n')
+        for i in range(len(masses_directories)):
+            mass_dir = masses_directories[i]
+            fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+            infile.close()
+    outfile.close()
 
-    df = pd.read_csv('./parameters.txt', sep='\t')
+def create_stables_folder():
 
-    folders = df['folder']
-    filenames = df['filename']
-    ms_bp = df['m_bp']
-    as_bp = df['a_bp']
-    bs_ffp = df['b_ffp']
-    phis_bp = df['phi_bp']
+    os.system('mkdir stables/')
 
-    return df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp
+    masses_directories = os.listdir('./particles/')
+
+    for mass_dir in masses_directories:
+        #Copy the file to other folder
+        os.system('cp particles/'+mass_dir+'/*.hdf5 stables/')
 
 def read_stables_df():
 
@@ -53,56 +60,44 @@ def read_stables_df():
 
     return df, filenames, ms_bp, as_bp, bs_ffp, phis_bp
 
-def find_closest_approach(b_ffp, a_bp_initial):
+def plot_trajectory(x,y,path_filename):
 
-    return (b_ffp**2)/math.sqrt(b_ffp**2 + 1600*a_bp_initial)
+    f = plt.figure(figsize=(70,30))
 
-def solve_for_x(m0, m_bp, m_ffp):
+    x_star = x[:,0]-x[:,0]
+    x_ffp = x[:,1]-x[:,0]
 
-    x = Symbol('x')
-    solution = solve((m_bp+m_ffp)*x**5 + (2*m_bp+3*m_ffp)*x**4 + (m_bp+3*m_ffp)*x**3 - (m_bp+3*m0)*x**2 - (3*m0+2*m_bp)*x - (m0+m_bp), x)
+    y_star = y[:,0]-y[:,0]
+    y_ffp = y[:,1]-y[:,0]
 
-    return solution
+    x_planet = x[:,2]-x[:,0]
+    y_planet = y[:,2]-y[:,0]
 
-def is_hill_stable(m0, m_ffp, m_bp, a_values, e_values):
+    plt.plot(x_star,y_star,c='y',label='Star')
+    plt.scatter(x_star[0],y_star[0],c='black',marker='*', lw = 0)
+    plt.scatter(x_star[-1],y_star[-1],c='y',marker='*', lw = 0)
 
-    M = m0 + m_bp + m_ffp
-    mu = m0 + m_bp
+    plt.plot(x_ffp,y_ffp,c='c',label='FFP', lw = 2)
+    plt.scatter(x_ffp[0],y_ffp[0],c='black', lw = 0)
+    plt.scatter(x_ffp[-1],y_ffp[-1],c='c', lw = 0)
 
-    a_1 = a_values[2]
-    a_2 = a_values[1]
+    plt.plot(x_planet,y_planet,c='m',label='BP',alpha=0.5)
+    plt.scatter(x_planet[0],y_planet[0],c='black', lw = 0)
+    plt.scatter(x_planet[-1],y_planet[-1],c='m', lw = 0)
 
-    e_1 = e_values[2]
-    e_2 = e_values[1]
+    plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
+    plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
 
-    x = solve_for_x(m0, m_bp, m_ffp)[0]
+    plt.title('Trajectory FFP', fontsize=40)
+    plt.axes().set_aspect('equal', 'datalim')
+    plt.xlabel('$x$ (AU)', fontsize=40)
+    plt.ylabel('$y$ (AU)', fontsize=40)
+    plt.legend(fontsize=40)
+    plt.savefig(path_filename)
 
-    f_x = m0*m_bp + (m0*m_ffp)/(1+x) + (m_bp*m_ffp)/(x)
-    g_x = m_bp*m_ffp + m0*m_ffp*(1+x)**2 + m0*m_bp*(x**2)
+    plt.close()
 
-    A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
-    beta = (m0*m_bp/m_ffp)**(3.0/2.0)*(M/(mu**4))**(1.0/2.0)*((1-e_1**2)/(1-e_2**2))**(1.0/2.0)
-    y = ((a_1*m_ffp*mu)/(a_2*m0*m_bp))**(1.0/2.0)
-
-    equation = (1+y**2)*(beta**2*y**2 + 2*beta*y + 1) - A*y**2
-
-    if(equation >= 0.0):
-        return True
-    else:
-        return False
-
-def process_stable(stables_file, folder, filename, m_bp, a_bp, b_ffp, phi_bp):
-
-    #Add its characteristics to another text
-    stables_file.write(filename+'\t'+str(m_bp)+'\t'+str(a_bp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\n')
-
-    #Copy the file to other folder
-    os.system('cp particles/'+folder+'/'+filename+' stables/'+filename)
-
-def extract_stables():
-
-    #Create file with all the runs made per line
-    create_parameters_file()
+def make_several_plots():
 
     #Masses
     m0 = 0.58 #MSun
@@ -111,83 +106,55 @@ def extract_stables():
     #Number of snapshots
     n_snapshots = 500
 
-    df, folders, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_parameters_df()
+    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
     num_files = len(filenames)
 
-    #To record the stables
-    stables_file = open('./stables.txt','w')
-    stables_file.write('filename\tm_bp\ta_bp\tb_ffp\tphi_bp\n')
-
     for i in range(num_files):
 
-        folder = folders[i]
         filename = filenames[i]
         m_bp = ms_bp[i]
         a_bp = as_bp[i]
         b_ffp = bs_ffp[i]
         phi_bp = phis_bp[i]
 
-        bodies = io.read_set_from_file('./particles/'+folder+'/'+filename, 'hdf5')
+        #Bodies Order: star - ffp - bp
+        bodies = io.read_set_from_file('./stables/'+filename, 'hdf5')
 
-        #Order: star - ffp - bp
-        e_values = bodies.eccentricity
-        a_values = bodies.semimajoraxis.value_in(units.AU)
+        #To append body history
+        eccs = []
+        smas = []
+        xs = []
+        ys = []
+        times = []
 
-        star = bodies[0]
-        ffp = bodies[1]
-        bp = bodies[2]
+        for data in bodies.history:
 
-        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
-        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
-        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
-        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+            #Order: star - ffp - bp
+            e_values = data.eccentricity
+            a_values = data.semimajoraxis.value_in(units.AU)
+            x_values = data.x.value_in(units.AU)
+            y_values = data.y.value_in(units.AU)
+            t_value = data.time.value_in(units.yr)[0]
 
-        star_bp = Particles(1)
-        star_bp.mass = star.mass + bp.mass
-        star_bp.position = [cm_x, cm_y, 0.0 | units.AU]
-        star_bp.velocity = [cm_vx, cm_vy, 0.0 | units.kms]
+            eccs.append(e_values)
+            smas.append(a_values)
+            xs.append(x_values)
+            ys.append(y_values)
+            times.append(t_value)
 
-        binary = [star_bp, ffp]
-        m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+        plot_trajectory(np.array(xs),np.array(ys),'./trajectories/'+filename+'.png')
 
-        print m0, m_bp, m_ffp
-        print m1, m2
-
-        break
-
-        if(is_hill_stable(m0, m_ffp, m_bp, a_values, e_values)):
-            process_stable(stables_file, folder, filename, m_bp, a_bp, b_ffp, phi_bp)
-
-    stables_file.close()
+        # if (i==0):
+        #     break
 
 
 if __name__ in ('__main__', '__plot__'):
 
-    extract_stables()
+    #Create file with all the runs made per line
+    create_parameters_and_status_file()
 
-    # df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
-    #
-    # num_files = len(filenames)
-    #
-    # for i in range(num_files):
-    #
-    #     filename = filenames[i]
-    #     m_bp = ms_bp[i]
-    #     a_bp = as_bp[i]
-    #     b_ffp = bs_ffp[i]
-    #     phi_bp = phis_bp[i]
-    #
-    #     bodies = io.read_set_from_file('./stables/'+filename, 'hdf5')
-    #
-    #     for data in bodies.history:
-    #
-    #         #Order: star - ffp - bp
-    #         e_values = data.eccentricity
-    #         a_values = data.semimajoraxis.value_in(units.AU)
-    #         vx_values = data.vx.value_in(units.kms)
-    #         vy_values = data.vy.value_in(units.kms)
-    #         x_values = data.x.value_in(units.AU)
-    #         y_values = data.y.value_in(units.AU)
-    #
-    #         t_value = data.time.value_in(units.yr)[0]
+    #Move all the stables to another folder
+    create_stables_folder()
+
+    make_several_plots()
