@@ -11,6 +11,11 @@ from amuse.units import units
 from amuse.datamodel import Particles
 from amuse.ext.orbital_elements import orbital_elements_from_binary
 
+def stop_code():
+    print '\nSTOP'
+    import sys
+    sys.exit()
+
 def create_parameters_and_status_file():
 
     masses_directories = os.listdir('./particles/')
@@ -47,6 +52,18 @@ def create_stables_folder():
     for mass_dir in masses_directories:
         #Copy the file to other folder
         os.system('cp particles/'+mass_dir+'/*.hdf5 stables/')
+
+def read_parameters_df():
+
+    df = pd.read_csv('./parameters.txt', sep='\t')
+
+    filenames = df['filename']
+    ms_bp = df['m_bp']
+    as_bp = df['a_bp']
+    bs_ffp = df['b_ffp']
+    phis_bp = df['phi_bp']
+
+    return ms_bp, as_bp, bs_ffp, phis_bp
 
 def read_stables_df():
 
@@ -141,16 +158,9 @@ def create_plots_folders():
     os.system('mkdir plots/')
     os.system('mkdir plots/trajectories')
     os.system('mkdir plots/orbital_elements')
+    os.system('mkdir plots/statistics')
 
-def make_several_plots():
-
-    create_plots_folders()
-
-    #Masses
-    m0 = 0.58 #MSun
-    m_ffp = 7.5 #MJupiter
-
-    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
 
     num_files = len(filenames)
 
@@ -190,15 +200,89 @@ def make_several_plots():
         plot_trajectory(np.array(xs), np.array(ys), filename)
         plot_orbital_elements(np.array(times), np.array(eccs), np.array(smas), filename)
 
+def uniq_list(seq):
+    #http://www.peterbe.com/plog/uniqifiers-benchmark
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if not (x in seen or seen_add(x))]
+
+def plot_combination_percentage(first_iteration, second_iteration, third_iteration, parameter, n_total_parameters, df, df_names):
+
+    combinations = []
+    percentages = []
+
+    combination = 1
+
+    for fi in first_iteration:
+        for si in second_iteration:
+            for ti in third_iteration:
+
+                subset = np.where((df[df_names[0]] == fi) & (df[df_names[1]] == si) & (df[df_names[2]] == ti))
+
+                combinations.append(combination)
+                percentages.append(len(subset[0])*100.0/float(n_total_parameters))
+
+                combination += 1
+
+    f = plt.figure(figsize=(30,15))
+
+    plt.scatter(combinations,percentages,c='r')
+
+    plt.title('Percentages of '+df_names[3]+' that turned a capture for each combination of the other three', fontsize=20)
+    plt.xlabel('Combination Number', fontsize=20)
+    plt.ylabel('Percentage of '+df_names[3], fontsize=20)
+    plt.savefig('./plots/statistics/percentage_'+df_names[3]+'.png')
+
+    plt.close()
+
+def make_percentages_plots(df):
+
+    #Reading parameters dataframe
+    ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par = read_parameters_df()
+
+    #Getting all the ms, as, bs and phis that were combined
+    ms_bp_par_uniq = uniq_list(ms_bp_par)
+
+    as_bp_par_uniq = uniq_list(as_bp_par)
+    bs_ffp_par_uniq = uniq_list(bs_ffp_par)
+    phis_bp_par_uniq = uniq_list(phis_bp_par)
+
+    #Numbers of each parameter
+    n_ms_bp_par = len(ms_bp_par_uniq)
+    n_as_bp_par = len(as_bp_par_uniq)
+    n_bs_ffp_par = len(bs_ffp_par_uniq)
+    n_phis_bp_par = len(phis_bp_par_uniq)
+
+    #Combinations
+    #m_bp
+    df_names = ['a_bp','b_ffp','phi_bp','m_bp']
+    plot_combination_percentage(as_bp_par_uniq, bs_ffp_par_uniq, phis_bp_par_uniq, ms_bp_par_uniq, n_ms_bp_par, df, df_names)
+    #a_bp
+    df_names = ['b_ffp','phi_bp','m_bp','a_bp']
+    plot_combination_percentage(bs_ffp_par_uniq, phis_bp_par_uniq, ms_bp_par_uniq, as_bp_par_uniq, n_as_bp_par, df, df_names)
+    #b_ffp
+    df_names = ['phi_bp','m_bp','a_bp','b_ffp']
+    plot_combination_percentage(phis_bp_par_uniq, ms_bp_par_uniq, as_bp_par_uniq, bs_ffp_par_uniq, n_bs_ffp_par, df, df_names)
+    #phi_bp
+    df_names = ['m_bp','a_bp','b_ffp','phi_bp']
+    plot_combination_percentage(ms_bp_par_uniq, as_bp_par_uniq, bs_ffp_par_uniq, phis_bp_par_uniq, n_phis_bp_par, df, df_names)
+
+
 if __name__ in ('__main__', '__plot__'):
 
     #Create file with all the runs made per line
-    create_parameters_and_status_file()
+    #create_parameters_and_status_file()
 
     #Move all the stables to another folder
-    create_stables_folder()
+    #create_stables_folder()
 
+    #Read df
+    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+
+    #Plottts
+    #create_plots_folders()
     #Make individual plots
-    make_several_plots()
-
+    #make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp)
+    #Make statistics plots
+    make_percentages_plots(df)
     
