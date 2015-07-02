@@ -124,10 +124,6 @@ def plot_orbital_elements(times, eccs, smas, filename):
     sma_starbp_ffp = smas[:,1]
     sma_star_bp = smas[:,2]
 
-    # print type(sma_star_bp)
-    # print np.shape(sma_star_bp)
-    # print sma_star_bp
-
     #eccentricity
     subplot = f.add_subplot(1,2,1)
 
@@ -206,43 +202,52 @@ def uniq_list(seq):
     seen_add = seen.add
     return [ x for x in seq if not (x in seen or seen_add(x))]
 
-def plot_combination_percentage(first_iteration, second_iteration, third_iteration, parameter, n_total_parameters, df, df_names):
-
-    combinations = []
-    percentages = []
-
-    combination = 1
-
-    for fi in first_iteration:
-        for si in second_iteration:
-            for ti in third_iteration:
-
-                subset = np.where((df[df_names[0]] == fi) & (df[df_names[1]] == si) & (df[df_names[2]] == ti))
-
-                combinations.append(combination)
-                percentages.append(len(subset[0])*100.0/float(n_total_parameters))
-
-                combination += 1
+def plot_parameter_number_captures(parameter, n_total_parameters, df, df_name):
 
     f = plt.figure(figsize=(30,15))
 
-    plt.scatter(combinations,percentages,c='r')
+    max_number = 0
 
-    plt.title('Percentages of '+df_names[3]+' that turned a capture for each combination of the other three', fontsize=20)
-    plt.xlabel('Combination Number', fontsize=20)
-    plt.ylabel('Percentage of '+df_names[3], fontsize=20)
-    plt.savefig('./plots/statistics/percentage_'+df_names[3]+'.png')
+    for par in parameter:
 
+        subset = np.where(df[df_name] == par)
+        number = len(subset[0])
+        plt.scatter(float(par), number, c='r', lw=0)
+
+        if(number > max_number):
+            max_number = number
+
+    plt.title('Number of '+df_name+' that turned a capture for each all of the ones tried', fontsize=20)
+    plt.xlabel(df_name, fontsize=20)
+    plt.ylabel('number of captures', fontsize=20)
+    plt.ylim(-0.02*max_number,max_number*1.02)
+    plt.savefig('./plots/statistics/number_captures_'+df_name+'.png')
     plt.close()
 
-def make_percentages_plots(df):
+def plot_parameters(parameters_x_axis, parameter_y_axis, parameter_color, parameter_shape, latex_names):
+
+    #latex_names: [x axis parameter, y axis parameter, color parameter, shape parameter]
+
+    f = plt.figure(figsize=(30,15))
+
+    sc = plt.scatter(parameters_x_axis, parameter_y_axis, c=parameter_color, vmin=np.amin(parameter_color), vmax=np.amax(parameter_color), lw=0, s=50)
+    cbar = plt.colorbar(sc)
+
+    #plt.title('Number of captures for fixed '+df_names[0]+' ', fontsize=20)
+    plt.xlabel(latex_names[0], fontsize=30)
+    plt.ylabel(latex_names[1], fontsize=30)
+    cbar.set_label(latex_names[2], rotation=0, fontsize=30)
+
+    plt.savefig('./plots/statistics/parameters.png')
+    plt.close()
+
+def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
     #Reading parameters dataframe
     ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par = read_parameters_df()
 
     #Getting all the ms, as, bs and phis that were combined
     ms_bp_par_uniq = uniq_list(ms_bp_par)
-
     as_bp_par_uniq = uniq_list(as_bp_par)
     bs_ffp_par_uniq = uniq_list(bs_ffp_par)
     phis_bp_par_uniq = uniq_list(phis_bp_par)
@@ -253,19 +258,21 @@ def make_percentages_plots(df):
     n_bs_ffp_par = len(bs_ffp_par_uniq)
     n_phis_bp_par = len(phis_bp_par_uniq)
 
-    #Combinations
+    print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
+
+    #Number of captures
     #m_bp
-    df_names = ['a_bp','b_ffp','phi_bp','m_bp']
-    plot_combination_percentage(as_bp_par_uniq, bs_ffp_par_uniq, phis_bp_par_uniq, ms_bp_par_uniq, n_ms_bp_par, df, df_names)
-    #a_bp
-    df_names = ['b_ffp','phi_bp','m_bp','a_bp']
-    plot_combination_percentage(bs_ffp_par_uniq, phis_bp_par_uniq, ms_bp_par_uniq, as_bp_par_uniq, n_as_bp_par, df, df_names)
-    #b_ffp
-    df_names = ['phi_bp','m_bp','a_bp','b_ffp']
-    plot_combination_percentage(phis_bp_par_uniq, ms_bp_par_uniq, as_bp_par_uniq, bs_ffp_par_uniq, n_bs_ffp_par, df, df_names)
-    #phi_bp
-    df_names = ['m_bp','a_bp','b_ffp','phi_bp']
-    plot_combination_percentage(ms_bp_par_uniq, as_bp_par_uniq, bs_ffp_par_uniq, phis_bp_par_uniq, n_phis_bp_par, df, df_names)
+    # plot_parameter_number_captures(ms_bp_par_uniq, n_ms_bp_par, df, 'm_bp')
+    # #a_bp
+    # plot_parameter_number_captures(as_bp_par_uniq, n_as_bp_par, df, 'a_bp')
+    # #b_ffp
+    # plot_parameter_number_captures(bs_ffp_par_uniq, n_bs_ffp_par, df, 'b_ffp')
+    # #phi_bp
+    # plot_parameter_number_captures(phis_bp_par_uniq, n_phis_bp_par, df, 'phi_bp')
+
+    latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
+    plot_parameters(phis_bp, bs_ffp, as_bp, ms_bp, latex_names)
+
 
 
 if __name__ in ('__main__', '__plot__'):
@@ -284,5 +291,4 @@ if __name__ in ('__main__', '__plot__'):
     #Make individual plots
     #make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp)
     #Make statistics plots
-    make_percentages_plots(df)
-    
+    make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp)
