@@ -43,16 +43,6 @@ def create_parameters_and_status_file():
             infile.close()
     outfile.close()
 
-def create_stables_folder():
-
-    os.system('mkdir stables/')
-
-    masses_directories = os.listdir('./particles/')
-
-    for mass_dir in masses_directories:
-        #Copy the file to other folder
-        os.system('cp particles/'+mass_dir+'/*.hdf5 stables/')
-
 def read_parameters_df():
 
     df = pd.read_csv('./parameters.txt', sep='\t')
@@ -152,8 +142,8 @@ def plot_orbital_elements(times, eccs, smas, filename):
 
 def create_plots_folders():
     os.system('mkdir plots/')
-    os.system('mkdir plots/trajectories')
-    os.system('mkdir plots/orbital_elements')
+    # os.system('mkdir plots/trajectories')
+    # os.system('mkdir plots/orbital_elements')
     os.system('mkdir plots/statistics')
 
 def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
@@ -212,7 +202,7 @@ def plot_parameter_number_captures(parameter, n_total_parameters, df, df_name):
 
         subset = np.where(df[df_name] == par)
         number = len(subset[0])
-        plt.scatter(float(par), number, c='r', lw=0)
+        plt.scatter(float(par), number, c='r', lw=0, s=30)
 
         if(number > max_number):
             max_number = number
@@ -224,21 +214,32 @@ def plot_parameter_number_captures(parameter, n_total_parameters, df, df_name):
     plt.savefig('./plots/statistics/number_captures_'+df_name+'.png')
     plt.close()
 
-def plot_parameters(parameters_x_axis, parameter_y_axis, parameter_color, parameter_shape, latex_names):
+def plot_parameters(parameters_x_axis, parameters_y_axis, parameter_color, parameters_shape, df, df_names, latex_names):
 
-    #latex_names: [x axis parameter, y axis parameter, color parameter, shape parameter]
+    #names: [x axis parameter, y axis parameter, color parameter, shape parameter]
+
+    markers = ["o",",",".","v","^","<",">","1","2","3","4","8","s","p","*","h","H","+","D","d","|","_"]
 
     f = plt.figure(figsize=(30,15))
 
-    sc = plt.scatter(parameters_x_axis, parameter_y_axis, c=parameter_color, vmin=np.amin(parameter_color), vmax=np.amax(parameter_color), lw=0, s=50)
-    cbar = plt.colorbar(sc)
+    marker_i = 0
 
-    #plt.title('Number of captures for fixed '+df_names[0]+' ', fontsize=20)
+    for par_shape in parameters_shape:
+
+        par_indices = np.where(df[df_names[3]] == par_shape)
+
+        sc = plt.scatter(np.array(parameters_x_axis)[par_indices], np.array(parameters_y_axis)[par_indices], c=parameter_color, vmin=np.amin(parameter_color), vmax=np.amax(parameter_color), lw=0, s=60, marker = markers[marker_i], label = latex_names[3]+' = '+str(par_shape))
+        cbar = plt.colorbar(sc)
+
+        marker_i += 1
+
+    plt.title('Captures', fontsize=20)
+    plt.legend(fontsize=30)
     plt.xlabel(latex_names[0], fontsize=30)
     plt.ylabel(latex_names[1], fontsize=30)
     cbar.set_label(latex_names[2], rotation=0, fontsize=30)
 
-    plt.savefig('./plots/statistics/parameters.png')
+    plt.savefig('./plots/statistics/parameters_'+df_names[0]+'_'+df_names[1]+'_'+df_names[2]+'_'+df_names[3]+'.png')
     plt.close()
 
 def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
@@ -262,32 +263,36 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
     #Number of captures
     #m_bp
-    # plot_parameter_number_captures(ms_bp_par_uniq, n_ms_bp_par, df, 'm_bp')
-    # #a_bp
-    # plot_parameter_number_captures(as_bp_par_uniq, n_as_bp_par, df, 'a_bp')
-    # #b_ffp
-    # plot_parameter_number_captures(bs_ffp_par_uniq, n_bs_ffp_par, df, 'b_ffp')
-    # #phi_bp
-    # plot_parameter_number_captures(phis_bp_par_uniq, n_phis_bp_par, df, 'phi_bp')
+    plot_parameter_number_captures(ms_bp_par_uniq, n_ms_bp_par, df, 'm_bp')
+    #a_bp
+    plot_parameter_number_captures(as_bp_par_uniq, n_as_bp_par, df, 'a_bp')
+    #b_ffp
+    plot_parameter_number_captures(bs_ffp_par_uniq, n_bs_ffp_par, df, 'b_ffp')
+    #phi_bp
+    plot_parameter_number_captures(phis_bp_par_uniq, n_phis_bp_par, df, 'phi_bp')
 
-    latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
-    plot_parameters(phis_bp, bs_ffp, as_bp, ms_bp, latex_names)
+    # df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
+    # latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
+    # plot_parameters(phis_bp, bs_ffp, as_bp, uniq_list(ms_bp), df, df_names, latex_names)
 
+    # df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
+    # latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
+    # plot_parameters(phis_bp, as_bp, bs_ffp, uniq_list(ms_bp), df, df_names, latex_names)
 
+    # df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
+    # latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
+    # plot_parameters(phis_bp, ms_bp, as_bp, uniq_list(bs_ffp), df, df_names, latex_names)
 
 if __name__ in ('__main__', '__plot__'):
 
     #Create file with all the runs made per line
-    #create_parameters_and_status_file()
-
-    #Move all the stables to another folder
-    #create_stables_folder()
+    create_parameters_and_status_file()
 
     #Read df
     df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
     #Plottts
-    #create_plots_folders()
+    create_plots_folders()
     #Make individual plots
     #make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp)
     #Make statistics plots

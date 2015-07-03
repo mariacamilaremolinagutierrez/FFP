@@ -5,4 +5,3 @@ clean:
 	rm parameters.txt
 	rm stables.txt
 	rm -r plots
-	rm -r stables
