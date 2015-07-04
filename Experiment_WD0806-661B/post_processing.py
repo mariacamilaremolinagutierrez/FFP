@@ -142,8 +142,6 @@ def plot_orbital_elements(times, eccs, smas, filename):
 
 def create_plots_folders():
     os.system('mkdir plots/')
-    # os.system('mkdir plots/trajectories')
-    # os.system('mkdir plots/orbital_elements')
     os.system('mkdir plots/statistics')
 
 def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
@@ -182,6 +180,9 @@ def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
             xs.append(x_values)
             ys.append(y_values)
             times.append(t_value)
+
+        os.system('mkdir plots/trajectories')
+        os.system('mkdir plots/orbital_elements')
 
         plot_trajectory(np.array(xs), np.array(ys), filename)
         plot_orbital_elements(np.array(times), np.array(eccs), np.array(smas), filename)
@@ -274,7 +275,7 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     # df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
     # latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
     # plot_parameters(phis_bp, bs_ffp, as_bp, uniq_list(ms_bp), df, df_names, latex_names)
-
+    #
     # df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
     # latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
     # plot_parameters(phis_bp, as_bp, bs_ffp, uniq_list(ms_bp), df, df_names, latex_names)

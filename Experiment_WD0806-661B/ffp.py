@@ -86,16 +86,6 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf):
 
     return bodies
 
-def save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter):
-    #Add attributes that I'm interested in to the bodies_to_save
-    bodies_to_save.position = converter.to_si(bodies.position).as_quantity_in(units.AU)
-    bodies_to_save.velocity = converter.to_si(bodies.velocity).as_quantity_in(units.kms)
-    bodies_to_save.semimajoraxis = converter.to_si(bodies.semimajoraxis).as_quantity_in(units.AU)
-    bodies_to_save.eccentricity = bodies.eccentricity
-    bodies_to_save.time = converter.to_si(time).as_quantity_in(units.yr)
-
-    write_set_to_file(bodies_to_save, bodies_filename, "hdf5")
-
 def solve_for_x(m0, m_bp, m_ffp):
 
     coefficients = [m_bp+m_ffp, 2*m_bp+3*m_ffp, m_bp+3*m_ffp, -(m_bp+3*m0), -(3*m0+2*m_bp), -(m0+m_bp)]
@@ -140,10 +130,7 @@ def is_hill_stable(m_values, a_values, e_values, converter):
     else:
         return False
 
-def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, bodies_filename):
-
-    #Particles that will be saved in the file
-    bodies_to_save = Particles(number_of_planets+2)
+def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
 
     #Positions and velocities centered on the center of mass
     bodies.move_to_center()
@@ -155,11 +142,6 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
     gravity = initialize_code(bodies, timestep_parameter = dt.value_in(nbody_system.time))
     channel_from_gr_to_framework = gravity.particles.new_channel_to(bodies)
 
-    x = AdaptingVectorQuantity()
-    y = AdaptingVectorQuantity()
-    times = AdaptingVectorQuantity()
-    system_energies = AdaptingVectorQuantity()
-
     E_initial = gravity.kinetic_energy + gravity.potential_energy
     DeltaE_max = 0.0 | nbody_system.energy
 
@@ -169,125 +151,50 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
         channel_from_gr_to_framework.copy()
 
         bodies.collection_attributes.timestamp = time
-
         gravity.particles.collection_attributes.timestamp = time
 
-        x.append(bodies.x)
-        y.append(bodies.y)
-        times.append(time)
-
         E = gravity.kinetic_energy + gravity.potential_energy
-        system_energies.append(E)
 
         DeltaE = abs(E-E_initial)
         if ( DeltaE > DeltaE_max ):
             DeltaE_max = DeltaE
 
-        #Orbital Elements
-        star = bodies[0]
-        ffp = bodies[1]
-        bp = bodies[2]
-
-        #Star+BP and FFP
-        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
-        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
-        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
-        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
-
-        star_bp = Particles(1)
-        star_bp.mass = star.mass + bp.mass
-        star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
-        star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
-
-        binary = [star_bp[0], ffp]
-        m1, m2, sma_starbp_ffp, e_starbp_ffp, ta, i, lan, ap = orbital_elements_from_binary(binary)
-        bodies[1].eccentricity = e_starbp_ffp
-        bodies[1].semimajoraxis = sma_starbp_ffp
-
-        #Star and BP
-        binary = [star, bp]
-        m1, m2, sma_star_bp, e_star_bp, ta, i, lan, ap = orbital_elements_from_binary(binary)
-        bodies[2].eccentricity = e_star_bp
-        bodies[2].semimajoraxis = sma_star_bp
-
-        save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter)
-
         time += dt_snapshots
 
-    max_energy_change = DeltaE_max/E_initial
+    #Orbital Elements
+    star = bodies[0]
+    ffp = bodies[1]
+    bp = bodies[2]
+
+    #Star+BP and FFP
+    cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
+    cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
+    cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
+    cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+
+    star_bp = Particles(1)
+    star_bp.mass = star.mass + bp.mass
+    star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
+    star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
+
+    binary = [star_bp[0], ffp]
+    m1, m2, sma_starbp_ffp, e_starbp_ffp, ta, i, lan, ap = orbital_elements_from_binary(binary)
+    bodies[1].eccentricity = e_starbp_ffp
+    bodies[1].semimajoraxis = sma_starbp_ffp
+
+    #Star and BP
+    binary = [star, bp]
+    m1, m2, sma_star_bp, e_star_bp, ta, i, lan, ap = orbital_elements_from_binary(binary)
+    bodies[2].eccentricity = e_star_bp
+    bodies[2].semimajoraxis = sma_star_bp
 
     is_stable = is_hill_stable(bodies.mass, bodies.semimajoraxis, bodies.eccentricity, converter)
 
+    max_energy_change = DeltaE_max/E_initial
+
     gravity.stop()
 
-    return x,y,times,system_energies,max_energy_change,is_stable
-
-def plot_trajectory(x,y,number_of_planets, j):
-
-    colors = ['magenta', 'green', 'DarkOrange', 'red']
-
-    f=figure(figsize=(35,15))
-
-    x_star = x[:,0].value_in(nbody_system.length)
-    x_ffp = x[:,1].value_in(nbody_system.length)
-
-    y_star = y[:,0].value_in(nbody_system.length)
-    y_ffp = y[:,1].value_in(nbody_system.length)
-
-    plot(x_star,y_star,'y',label='Star')
-    scatter(x_star[0],y_star[0],c='black',marker='*')
-    scatter(x_star[-1],y_star[-1],c='y',marker='*')
-
-    plot(x_ffp,y_ffp,'c',label='FFP')
-    scatter(x_ffp[0],y_ffp[0],c='black')
-    scatter(x_ffp[-1],y_ffp[-1],c='c')
-
-    for i in range(0, number_of_planets):
-
-        x_planet = x[:,i+2].value_in(nbody_system.length)
-        y_planet = y[:,i+2].value_in(nbody_system.length)
-
-        color_planet = colors[i]
-
-        plot(x_planet,y_planet,color=color_planet,label='BP',alpha=0.5)
-        scatter(x_planet[0],y_planet[0],c='black')
-        scatter(x_planet[-1],y_planet[-1],color=color_planet)
-
-    axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
-    axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
-
-    title('Trajectory FFP (nbody units)')
-    xlabel("$x$", fontsize=20)
-    ylabel("$y$", fontsize=20)
-    legend()
-
-    savefig('trajectory'+str(j)+'.png')
-
-    xlim(-3.1,1.1)
-    ylim(-1,1)
-
-    close()
-
-def plot_energy_change(times, energies):
-
-    times = times.value_in(nbody_system.time)
-    energies = energies.value_in(nbody_system.energy)
-
-    initial_energy = energies[0]
-    energies = (energies-initial_energy)/initial_energy
-
-    f=figure(figsize=(15,15))
-
-    plot(times,numpy.log10(abs(energies)),color='black')
-
-    axhline(y=0, xmin=0, xmax=times[-1], c='m', linestyle='--')
-
-    title('Total Energy of the System (nbody units)')
-    xlabel("$t$", fontsize=20)
-    ylabel("$\log{(|\Delta E / E|)}$", fontsize=20)
-
-    savefig('energy.png')
-    close()
+    return max_energy_change,is_stable
 
 def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p):
 
@@ -315,19 +222,16 @@ def stop_code():
     import sys
     sys.exit()
 
-def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, n_steps=10000, path_filename='./particles/m/m_a_b_p_.hdf5', n_snapshots=500):
+def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, n_steps=12000, n_snapshots=600):
     """
     Units: t_end_p(yr), m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
     """
-
     #Converter used in this program
     converter = nbody_system.nbody_to_si(1 | units.MSun,  5 | units.AU)
 
     #Conversion of units
     t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p)
 
-    #Number of planets
-    number_of_planets = 1
     #Initial distance to the planet (x-cordinate)
     r_inf = 40.0*a_bp
 
@@ -335,13 +239,10 @@ def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a
     bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf)
 
     #Evolve time
-    x,y,times,energies,max_energy_change,is_stable = evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, path_filename)
-
-    #plot_trajectory(x,y,number_of_planets,phi_bp)
-    #plot_energy_change(times, energies)
+    max_energy_change,is_stable = evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots)
 
     return max_energy_change, is_stable
 
 if __name__ in ('__main__', '__plot__'):
 
-    run_capture()
+    print run_capture()

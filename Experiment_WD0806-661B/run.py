@@ -34,9 +34,9 @@ def permute(m_bp):
     b_limit_fraction = 1.0 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    n_as_bp = 10
-    n_bs_ffp = 10
-    n_phis_bp = 10
+    n_as_bp = 1
+    n_bs_ffp = 1
+    n_phis_bp = 100
 
     #Variable parameters
     as_bp = np.linspace(1.0,50.0,n_as_bp) #AU
@@ -80,9 +80,6 @@ def permute(m_bp):
                     start_time = time.time()
 
                     #Filename
-                    filename = ('m%.6e_a%.6e_b%.6e_p%.6e.hdf5')%(m_bp,a_bp,b_ffp,phi_bp)
-                    path_filename = './particles/'+m_bp_filename+'/'+filename
-
                     max_energy_change, is_stable = ffp.run_capture(t_end_p=t_end,
                                                                     m0_p=m0,
                                                                     m_ffp_p=m_ffp,
@@ -92,20 +89,16 @@ def permute(m_bp):
                                                                     b_ffp_p=b_ffp,
                                                                     phi_bp_p=phi_bp,
                                                                     n_steps=n_steps,
-                                                                    path_filename=path_filename,
                                                                     n_snapshots=n_snapshots)
 
                     #Time stops
                     duration = time.time()-start_time
 
-                    #Write in File (iteration, mass of ffp, impact parameter, phi, duration)
-                    file_parameters.write(filename+'\t'+('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
+                    #Write in File
+                    file_parameters.write(('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
 
                     if(is_stable):
-                        file_stables.write(filename+'\t'+('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
-                    else:
-                        #Delete the file
-                        os.system('rm '+path_filename)
+                        file_stables.write(('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
 
                 #Advance counter
                 i += 1
