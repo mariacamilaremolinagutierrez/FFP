@@ -1,0 +1,2 @@
+m1.188889e+00	a1.000000e+00	b-8.023452e+00	p2.752418e+02	#This one is at -300 and seem to be going further
+m1.188889e+00	a1.000000e+00	b1.123283e+01	p2.294588e+02	#This one starts down but is similar to the second
