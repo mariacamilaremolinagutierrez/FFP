@@ -21,7 +21,7 @@ def create_parameters_and_status_file():
     masses_directories = os.listdir('./particles/')
 
     with open('./parameters.txt', 'w') as outfile:
-        outfile.write('folder\tfilename\tm_bp\ta_bp\tb_ffp\tphi_bp\trun_time\tenergy_change\n')
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\trun_time\tenergy_change\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
@@ -33,7 +33,7 @@ def create_parameters_and_status_file():
     outfile.close()
 
     with open('./stables.txt', 'w') as outfile:
-        outfile.write('filename\tm_bp\ta_bp\tb_ffp\tphi_bp\trun_time\tenergy_change\n')
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\trun_time\tenergy_change\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
@@ -47,7 +47,6 @@ def read_parameters_df():
 
     df = pd.read_csv('./parameters.txt', sep='\t')
 
-    filenames = df['filename']
     ms_bp = df['m_bp']
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
@@ -57,15 +56,14 @@ def read_parameters_df():
 
 def read_stables_df():
 
-    df = pd.read_csv('./stables.txt', sep='\t')
+    df = pd.read_csv('./stables.txt', sep='\t', dtype=np.float64)
 
-    filenames = df['filename']
     ms_bp = df['m_bp']
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
 
-    return df, filenames, ms_bp, as_bp, bs_ffp, phis_bp
+    return df, ms_bp, as_bp, bs_ffp, phis_bp
 
 def plot_trajectory(x, y, filename):
 
@@ -201,7 +199,16 @@ def plot_parameter_number_captures(parameter, n_total_parameters, df, df_name):
 
     for par in parameter:
 
-        subset = np.where(df[df_name] == par)
+        df_pars = df[df_name]
+        a = [float(dfp) for dfp in df_pars]
+
+        subset = np.where(a == par)
+
+        df_pars = df[df_name]
+        a = [float(dfp) for dfp in df_pars]
+
+        subset = np.where(a == par)
+
         number = len(subset[0])
         plt.scatter(float(par), number, c='r', lw=0, s=30)
 
@@ -290,7 +297,7 @@ if __name__ in ('__main__', '__plot__'):
     create_parameters_and_status_file()
 
     #Read df
-    df, filenames, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+    df, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
     #Plottts
     create_plots_folders()
