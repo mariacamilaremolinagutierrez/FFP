@@ -31,11 +31,11 @@ def permute(m_bp):
     t_end = 650.0 #yr
     n_steps = 12000
     n_snapshots = int(n_steps/20.0)
-    b_limit_fraction = 1.0 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
+    b_limit_fraction = 0.5 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    n_as_bp = 1
-    n_bs_ffp = 1
+    n_as_bp = 10
+    n_bs_ffp = 10
     n_phis_bp = 100
 
     #Variable parameters
@@ -80,25 +80,25 @@ def permute(m_bp):
                     start_time = time.time()
 
                     #Filename
-                    max_energy_change, is_stable = ffp.run_capture(t_end_p=t_end,
-                                                                    m0_p=m0,
-                                                                    m_ffp_p=m_ffp,
-                                                                    e_bp_p=e_bp,
-                                                                    m_bp_p=m_bp,
-                                                                    a_bp_p=a_bp,
-                                                                    b_ffp_p=b_ffp,
-                                                                    phi_bp_p=phi_bp,
-                                                                    n_steps=n_steps,
-                                                                    n_snapshots=n_snapshots)
+                    max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp = ffp.run_capture(t_end_p=t_end,
+                                                                                                                        m0_p=m0,
+                                                                                                                        m_ffp_p=m_ffp,
+                                                                                                                        e_bp_p=e_bp,
+                                                                                                                        m_bp_p=m_bp,
+                                                                                                                        a_bp_p=a_bp,
+                                                                                                                        b_ffp_p=b_ffp,
+                                                                                                                        phi_bp_p=phi_bp,
+                                                                                                                        n_steps=n_steps,
+                                                                                                                        n_snapshots=n_snapshots)
 
                     #Time stops
                     duration = time.time()-start_time
 
                     #Write in File
-                    file_parameters.write(('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
+                    file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,duration,max_energy_change))
 
                     if(is_stable):
-                        file_stables.write(('%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,duration,max_energy_change))
+                        file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,duration,max_energy_change))
 
                 #Advance counter
                 i += 1
