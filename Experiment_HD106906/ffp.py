@@ -9,18 +9,48 @@ from amuse.units import units, constants, nbody_system
 from amuse.units.quantities import AdaptingVectorQuantity
 from amuse.datamodel import Particles, ParticlesSuperset
 from amuse.community.smalln.interface import SmallN
-from amuse.ext.orbital_elements import orbital_elements_from_binary, new_binary_from_orbital_elements
+from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
 def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
     """
     initialize gravity code for bodies
     """
-    stars_gravity = code()
+    stars_gravity = code(channel_type="sockets")
     stars_gravity.particles.add_particles(bodies)
     stars_gravity.commit_particles()
     stars_gravity.parameters.timestep_parameter = timestep_parameter  # default 0.0169 time
 
     return stars_gravity
+
+def my_orbital_elements_from_binary(binary, G=nbody_system.G):
+
+    if len(binary)>2:
+      raise Exception("expects binary or single part")
+
+    if len(binary)==2:
+      mass1=binary[0].mass
+      mass2=binary[1].mass
+      position = binary[1].position-binary[0].position
+      velocity = binary[1].velocity-binary[0].velocity
+      total_mass = mass1 + mass2
+    else:
+      mass1=binary.mass
+      mass2=0.*mass1
+      position = binary.position
+      velocity = binary.velocity
+      total_mass = mass1
+
+    specific_energy = (1.0/2.0)*velocity.lengths_squared() - G*total_mass/position.lengths()
+    specific_angular_momentum = position.cross(velocity)
+    specific_angular_momentum_norm = specific_angular_momentum.lengths()
+
+    semimajor_axis = -G*total_mass/(2.0*specific_energy)
+
+    eccentricity_argument = 2.0*specific_angular_momentum_norm**2*specific_energy/(G**2*total_mass**2)
+    if (eccentricity_argument <= -1): eccentricity = 0.0
+    else: eccentricity = numpy.sqrt(1.0 + eccentricity_argument)
+
+    return mass1, mass2, semimajor_axis, eccentricity
 
 def get_parabolic_velocity(m0, m_ffp, b_ffp, r_inf, m_bp, a_bp, phi_bp):
 
@@ -73,7 +103,7 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, lan_bp, b_ffp, r_in
     star_planet_as_one.position = cm_p
     star_planet_as_one.velocity = cm_v
     binary = [star_planet_as_one[0], m0_ffp[1]]
-    m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+    m1, m2, sma, e = my_orbital_elements_from_binary(binary)
     #For the star it sets the initial values of semimajoraxis and eccentricity of the ffp around star+bp
     m0_ffp.eccentricity = e
     m0_ffp.semimajoraxis = sma
@@ -144,10 +174,6 @@ def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
     E_initial = gravity.kinetic_energy + gravity.potential_energy
     DeltaE_max = 0.0 | nbody_system.energy
 
-    orbital_elements = numpy.zeros((n_snapshots,4))
-
-    snapshot = 0
-
     while time<=t_end:
 
         gravity.evolve_model(time)
@@ -162,53 +188,44 @@ def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
         if ( DeltaE > DeltaE_max ):
             DeltaE_max = DeltaE
 
-        #Orbital Elements
-        star = bodies[0]
-        ffp = bodies[1]
-        bp = bodies[2]
-
-        #Star+BP and FFP
-        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
-        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
-        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
-        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
-
-        star_bp = Particles(1)
-        star_bp.mass = star.mass + bp.mass
-        star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
-        star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
-
-        binary = [star_bp[0], ffp]
-        m1, m2, sma_starbp_ffp, e_starbp_ffp, ta, i, lan, ap = orbital_elements_from_binary(binary)
-        bodies[1].eccentricity = e_starbp_ffp
-        bodies[1].semimajoraxis = sma_starbp_ffp
-
-        #Star and BP
-        binary = [star, bp]
-        m1, m2, sma_star_bp, e_star_bp, ta, i, lan, ap = orbital_elements_from_binary(binary)
-        bodies[2].eccentricity = e_star_bp
-        bodies[2].semimajoraxis = sma_star_bp
-
-        orbital_elements[snapshot,0] = e_starbp_ffp
-        orbital_elements[snapshot,1] = e_star_bp
-        orbital_elements[snapshot,2] = converter.to_si(sma_starbp_ffp).value_in(units.AU)
-        orbital_elements[snapshot,3] = converter.to_si(sma_star_bp).value_in(units.AU)
-
-        snapshot += 1
         time += dt_snapshots
 
     max_energy_change = DeltaE_max/E_initial
 
-    is_stable = is_hill_stable(bodies.mass, bodies.semimajoraxis, bodies.eccentricity, converter)
+    #Orbital Elements
+    star = bodies[0]
+    ffp = bodies[1]
+    bp = bodies[2]
 
-    if(is_stable):
-        numpy.save('./orbital_elements/orbital_elements',orbital_elements) #Change filenameeeeee
+    #Star+BP and FFP
+    cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
+    cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
+    cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
+    cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+
+    star_bp = Particles(1)
+    star_bp.mass = star.mass + bp.mass
+    star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
+    star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
+
+    binary = [star_bp[0], ffp]
+    m1, m2, sma_starbp_ffp, e_starbp_ffp = my_orbital_elements_from_binary(binary)
+    bodies[1].eccentricity = e_starbp_ffp
+    bodies[1].semimajoraxis = sma_starbp_ffp
+
+    #Star and BP
+    binary = [star, bp]
+    m1, m2, sma_star_bp, e_star_bp = my_orbital_elements_from_binary(binary)
+    bodies[2].eccentricity = e_star_bp
+    bodies[2].semimajoraxis = sma_star_bp
+
+    is_stable = is_hill_stable(bodies.mass, bodies.semimajoraxis, bodies.eccentricity, converter)
 
     gravity.stop()
 
-    return max_energy_change,is_stable
+    return max_energy_change,is_stable,e_starbp_ffp,e_star_bp,sma_starbp_ffp,sma_star_bp
 
-def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p):
+def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, lan_bp_p):
 
     #time of integration in yr
     t_end = converter.to_nbody(t_end_p | units.yr)
@@ -226,8 +243,10 @@ def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_f
     b_ffp = converter.to_nbody(b_ffp_p | units.AU)
     #initial angle for of the bounded planet in degrees
     phi_bp = phi_bp_p
+    #longitude_of_the_ascending_node
+    lan_bp = lan_bp_p
 
-    return t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp
+    return t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, lan_bp
 
 def stop_code():
     print '\nSTOP'
@@ -277,7 +296,7 @@ def plot_trajectory(x,y,z):
     plt.show()
     plt.close()
 
-def run_capture(t_end_p=650.0, m0_p=1.5, m_ffp_p=11, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=5.0, b_ffp_p=1.0, phi_bp_p=0.0, lan_bp=0.0, n_steps=12000, n_snapshots=600):
+def run_capture(t_end_p=650.0, m0_p=1.5, m_ffp_p=11, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=5.0, b_ffp_p=1.0, phi_bp_p=0.0, lan_bp_p=0.0, n_steps=12000, n_snapshots=600):
     """
     Units: t_end_p(yr), m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
     """
@@ -285,7 +304,7 @@ def run_capture(t_end_p=650.0, m0_p=1.5, m_ffp_p=11, e_bp_p=0.0, m_bp_p=0.1, a_b
     converter = nbody_system.nbody_to_si(1 | units.MSun,  5 | units.AU)
 
     #Conversion of units
-    t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p)
+    t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, lan_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, lan_bp_p)
 
     #Initial distance to the planet (x-cordinate)
     r_inf = 40.0*a_bp
@@ -294,9 +313,9 @@ def run_capture(t_end_p=650.0, m0_p=1.5, m_ffp_p=11, e_bp_p=0.0, m_bp_p=0.1, a_b
     bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, lan_bp, b_ffp, r_inf)
 
     #Evolve time
-    max_energy_change,is_stable = evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots)
+    max_energy_change,is_stable, e_starbp_ffp, e_star_bp, sma_starbp_ffp, sma_star_bp = evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots)
 
-    return max_energy_change, is_stable
+    return max_energy_change, is_stable, e_starbp_ffp, e_star_bp, sma_starbp_ffp, sma_star_bp
 
 if __name__ in ('__main__', '__plot__'):
 
