@@ -174,9 +174,9 @@ def plot_parameters(parameters_x_axis, parameters_y_axis, parameter_color, df_na
     f = plt.figure(figsize=(30,15))
 
     sc = plt.scatter(parameters_x_axis, parameters_y_axis, c=parameter_color, vmin=np.amin(parameter_color), vmax=np.amax(parameter_color), lw=0, s=10)
-    cbar = plt.colorbar(sc)
+    cbar = plt.colorbar(sc, orientation="horizontal")
 
-    plt.title('Captures', fontsize=20)
+    plt.title('$\mathrm{CAPTURES}$', fontsize=20)
     plt.xlabel(latex_names[0], fontsize=30)
     plt.ylabel(latex_names[1], fontsize=30)
     cbar.set_label(latex_names[2], rotation=0, fontsize=30)
@@ -184,49 +184,54 @@ def plot_parameters(parameters_x_axis, parameters_y_axis, parameter_color, df_na
     plt.savefig('./plots/statistics/parameters_'+df_names[0]+'_'+df_names[1]+'_'+df_names[2]+'_'+df_names[3]+'.png')
     plt.close()
 
-def plot_threesome(parameters_xaxis, parameters_color, parameters_marker, df_names):
+def plot_threesome(parameters_xaxis, parameters_color, parameters_marker, df_names, latex_names):
     #names: [x axis parameter, color parameter, marker parameter]
 
-    markers = ["o",",",".","v","^","<",">","1","2","3","4","8","s","p","*","h","H","+","D","d","|","_"]
+    num_lines = len(parameters_xaxis)
+    list_to_uniq = []
 
-    xaxis_values = uniq_list(parameters_xaxis)
-    colorbar_values = uniq_list(parameters_color)
-    marker_values = uniq_list(parameters_marker)
+    for i in range(num_lines):
+        list_to_uniq.append(str(parameters_xaxis[i])+'\t'+str(parameters_color[i])+'\t'+str(parameters_marker[i]))
 
-    min_val = int(math.floor(min(colorbar_values)))
-    max_val = int(math.ceil(max(colorbar_values)))
-    my_cmap = cm.get_cmap('jet') # or any other one
-    norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    #my_cmap.set_label(latex_names[1], rotation=0, fontsize=30)
+    unique_combinations, number_unique_combinations = np.unique(list_to_uniq, return_counts=True)
 
-    cmmapable = cm.ScalarMappable(norm, my_cmap)
-    cmmapable.set_array(range(min_val, max_val))
+    xaxis_values = []
+    colorbar_values = []
+    marker_values = []
 
-    f = plt.figure(figsize=(30,15))
+    for uc in unique_combinations:
+        uc_parts = uc.split('\t')
+        xaxis_values.append(float(uc_parts[0]))
+        colorbar_values.append(float(uc_parts[1]))
+        marker_values.append(float(uc_parts[2]))
 
-    for par_xaxis in xaxis_values:
-        for par_color in colorbar_values:
+    xaxis_values = np.array(xaxis_values)
+    colorbar_values = np.array(colorbar_values)
+    marker_values = np.array(marker_values)
 
-            marker_i = 0
-            for par_marker in marker_values:
+    uniq_markers = np.array(uniq_list(marker_values))
+    markers = [".",">","v","d","s","D","p","H","*","o"]
+    marker_i = 0
 
-                color_i = my_cmap(norm(par_xaxis)) # returns an rgba value
+    f = plt.figure(figsize=(40,20))
 
-                par_indices = np.where((df[df_names[0]] == par_xaxis) & (df[df_names[1]] == par_color) & (df[df_names[2]] == par_marker))
-                amount = len(par_indices)
+    m = cm.ScalarMappable(cmap=cm.jet)
+    m.set_array(colorbar_values)
 
-                if (amount != 0):
-                    plt.scatter(par_xaxis, amount, c=color_i, lw=0, s=60, marker=markers[marker_i], label=df_names[2]+' = '+str(par_marker))
+    for um in uniq_markers:
 
-                marker_i += 1
+        par_indices = np.where(marker_values == um)
+        sc = plt.scatter(xaxis_values[par_indices], number_unique_combinations[par_indices], c=colorbar_values[par_indices], lw=0, s=40, marker=markers[marker_i], label=latex_names[2]+'$ = $'+str(um))
 
         marker_i += 1
 
-    plt.colorbar(cmmapable)
-    plt.title('Captures', fontsize=20)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=30)
+    cbar = plt.colorbar(m, orientation="horizontal")
+    cbar.set_label(latex_names[1], fontsize=30)
+    plt.title('$\mathrm{CAPTURES}$', fontsize=40)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=20)
     plt.xlabel(latex_names[0], fontsize=30)
-    plt.ylabel(latex_names[1], fontsize=30)
+    plt.ylabel('$\mathrm{Captures}$', fontsize=30)
+    plt.ylim(0, max(number_unique_combinations)*1.05)
 
     plt.savefig('./plots/statistics/threesome_'+df_names[0]+'_'+df_names[1]+'_'+df_names[2]+'.png')
     plt.close()
@@ -252,18 +257,16 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
 
     #Number of captures
-    #m_bp
-    plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
-    #a_bp
-    plot_histograms(as_bp, n_as_bp_par, 'a_bp')
-    #b_ffp
-    plot_histograms(bs_ffp, n_bs_ffp_par, 'b_ffp')
-    #phi_bp
-    plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
+    # #m_bp
+    # plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
+    # #a_bp
+    # plot_histograms(as_bp, n_as_bp_par, 'a_bp')
+    # #b_ffp
+    # plot_histograms(bs_ffp, n_bs_ffp_par, 'b_ffp')
+    # #phi_bp
+    # plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
 
-    # df_names = ['b_ffp', 'a_bp', 'm_bp']
-    # plot_threesome(bs_ffp, as_bp, ms_bp, df_names)
-
+    #Plot parameters
     df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
     latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
     plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
@@ -276,15 +279,33 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
     plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
 
+    #Plot threesomes
+    df_names = ['m_bp', 'b_ffp', 'a_bp']
+    latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
+    plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
+
+    df_names = ['b_ffp', 'm_bp', 'a_bp']
+    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$a_{BP}$']
+    plot_threesome(bs_ffp, ms_bp, as_bp, df_names, latex_names)
+
+    df_names = ['a_bp', 'b_ffp', 'm_bp']
+    latex_names = ['$a_{BP} \quad \mathrm{(AU)}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    plot_threesome(as_bp, bs_ffp, ms_bp, df_names, latex_names)
+
+    df_names = ['b_ffp', 'a_bp', 'm_bp']
+    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    plot_threesome(bs_ffp, as_bp, ms_bp, df_names, latex_names)
+
+
 if __name__ in ('__main__', '__plot__'):
 
     #Create file with all the runs made per line
-    create_parameters_and_status_file()
+    # create_parameters_and_status_file()
 
     #Read df
     df, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
     #Plottts
-    create_plots_folders()
+    # create_plots_folders()
     #Make statistics plots
     make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp)

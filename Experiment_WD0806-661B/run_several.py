@@ -3,7 +3,9 @@ import numpy as np
 
 def create_info_file():
     info = open('./info.txt','w')
-    info.write('STABLES:\n')
+    info.write('PARAMETERS (All of the ones run):\n')
+    info.write('mass_bp(MJupiter)\tsemimajoraxis_bp(AU)\timpact_parameter_ffp(AU)\tphi_bp(degrees)\teccentricity_star_ffp\teccentricity_star_bp\tsemimajoraxis_star_ffp(AU)\tsemimajoraxis_star_bp(AU)\tduration_run(s)\tenergy_conservation\n')
+    info.write('\nSTABLES (Only the Hill stables):\n')
     info.write('mass_bp(MJupiter)\tsemimajoraxis_bp(AU)\timpact_parameter_ffp(AU)\tphi_bp(degrees)\teccentricity_star_ffp\teccentricity_star_bp\tsemimajoraxis_star_ffp(AU)\tsemimajoraxis_star_bp(AU)\tduration_run(s)\tenergy_conservation\n')
     info.close()
 
