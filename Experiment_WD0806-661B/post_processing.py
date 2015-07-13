@@ -167,6 +167,21 @@ def plot_histograms(parameter, amount, df_name):
     plt.savefig('./plots/statistics/number_captures_'+df_name+'.png')
     plt.close()
 
+def plot_histogram_phi(parameter, df_name):
+
+    f = plt.figure(figsize=(30,15))
+
+    parameter = np.array(parameter)
+
+    n,b,p = plt.hist(parameter, bins = int(len(parameter)/160.0), color = 'c')
+
+    plt.title('Histogram of captures for each '+df_name, fontsize=20)
+    plt.xlabel(df_name, fontsize=20)
+    plt.ylabel('number of captures', fontsize=20)
+    plt.ylim(0,max(n)*1.05)
+    plt.savefig('./plots/statistics/number_captures_'+df_name+'.png')
+    plt.close()
+
 def plot_parameters(parameters_x_axis, parameters_y_axis, parameter_color, df_names, latex_names):
 
     #names: [x axis parameter, y axis parameter, color parameter, fixed parameter]
@@ -236,7 +251,6 @@ def plot_threesome(parameters_xaxis, parameters_color, parameters_marker, df_nam
     plt.savefig('./plots/statistics/threesome_'+df_names[0]+'_'+df_names[1]+'_'+df_names[2]+'.png')
     plt.close()
 
-
 def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
     #Reading parameters dataframe
@@ -257,44 +271,52 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
 
     #Number of captures
-    # #m_bp
+    #m_bp
     # plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
-    # #a_bp
+    #a_bp
     # plot_histograms(as_bp, n_as_bp_par, 'a_bp')
-    # #b_ffp
-    # plot_histograms(bs_ffp, n_bs_ffp_par, 'b_ffp')
-    # #phi_bp
+    #b_ffp
+    # bs_ffp_over_a_bp = np.array([])
+    # for a_bp_par in as_bp_par_uniq:
+    #     to_add = np.array(np.array(bs_ffp)[ np.where( df['a_bp']==a_bp_par) ]) / a_bp_par
+    #     bs_ffp_over_a_bp = np.concatenate((bs_ffp_over_a_bp, to_add))
+    # plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
+    #phi_bp
     # plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
+    # positive_indices = np.where(bs_ffp>=0)
+    # negative_indices = np.where(bs_ffp<0)
+    # plot_histogram_phi(np.array(phis_bp)[positive_indices], 'phi_bp_b_positive')
+    # plot_histogram_phi(np.array(phis_bp)[negative_indices], 'phi_bp_b_negative')
 
     #Plot parameters
-    df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
-    latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
-    plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
-
-    df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
-    latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
-    plot_parameters(phis_bp, as_bp, bs_ffp, df_names, latex_names)
-
-    df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
-    latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
-    plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
+    # df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
+    # latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
+    # plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
+    #
+    # df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
+    # latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
+    # plot_parameters(phis_bp, as_bp, bs_ffp, df_names, latex_names)
+    #
+    # df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
+    # latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
+    # plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
 
     #Plot threesomes
-    df_names = ['m_bp', 'b_ffp', 'a_bp']
-    latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
-    plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
-
-    df_names = ['b_ffp', 'm_bp', 'a_bp']
-    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$a_{BP}$']
-    plot_threesome(bs_ffp, ms_bp, as_bp, df_names, latex_names)
-
-    df_names = ['a_bp', 'b_ffp', 'm_bp']
-    latex_names = ['$a_{BP} \quad \mathrm{(AU)}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP}$']
-    plot_threesome(as_bp, bs_ffp, ms_bp, df_names, latex_names)
-
-    df_names = ['b_ffp', 'a_bp', 'm_bp']
-    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP} \quad \mathrm{(AU)}$', '$m_{BP}$']
-    plot_threesome(bs_ffp, as_bp, ms_bp, df_names, latex_names)
+    # df_names = ['m_bp', 'b_ffp', 'a_bp']
+    # latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
+    # plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
+    #
+    # df_names = ['b_ffp', 'm_bp', 'a_bp']
+    # latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$a_{BP}$']
+    # plot_threesome(bs_ffp, ms_bp, as_bp, df_names, latex_names)
+    #
+    # df_names = ['a_bp', 'b_ffp', 'm_bp']
+    # latex_names = ['$a_{BP} \quad \mathrm{(AU)}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    # plot_threesome(as_bp, bs_ffp, ms_bp, df_names, latex_names)
+    #
+    # df_names = ['b_ffp', 'a_bp', 'm_bp']
+    # latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    # plot_threesome(bs_ffp, as_bp, ms_bp, df_names, latex_names)
 
 
 if __name__ in ('__main__', '__plot__'):

@@ -2,22 +2,6 @@ import numpy as np
 import os, time, math, sys
 import ffp
 
-def squared_space(b_initial, b_final, n_bs):
-
-    if (b_initial<0.0):
-        #assuming b_initial = b_final
-        ss = np.zeros(n_bs)
-        ss_squared = np.linspace(-b_initial**2,b_final**2,n_bs)
-        for i in range(len(ss_squared)):
-            sssi = ss_squared[i]
-            if (sssi >= 0.0):
-                ss[i] = math.sqrt(sssi)
-            else:
-                ss[i] = -math.sqrt(-sssi)
-    else:
-        ss = np.sqrt(np.linspace(b_initial**2,b_final**2,n_bs))
-    return ss
-
 def find_limit_b(r_0, mass_ratio):
     return r_0*math.sqrt(-(-mass_ratio**6-6*mass_ratio**5-15*mass_ratio**4-20*mass_ratio**3-15*mass_ratio**2-(mass_ratio+1)**3*math.sqrt(mass_ratio**6+6*mass_ratio**5+25615*mass_ratio**4+20*mass_ratio**3+15*mass_ratio**2+6*mass_ratio+1)-6*mass_ratio-1)/(8*mass_ratio**4))
 
@@ -31,7 +15,7 @@ def permute(m_bp):
     t_end = 650.0 #yr
     n_steps = 12000
     n_snapshots = int(n_steps/20.0)
-    b_limit_fraction = 0.5 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
+    b_limit_fraction = 0.15 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
     n_as_bp = 10
@@ -40,7 +24,6 @@ def permute(m_bp):
 
     #Variable parameters
     as_bp = np.linspace(1.0,50.0,n_as_bp) #AU
-    np.random.seed(12)
 
     m_bp_filename = ('m%.4e')%(m_bp)
 
@@ -66,9 +49,10 @@ def permute(m_bp):
 
         b_limit = find_limit_b(a_bp, mass_ratio)*b_limit_fraction
         bs_ffp = np.linspace(-b_limit, b_limit, n_bs_ffp)
-        #bs_ffp = squared_space(-b_limit, b_limit, 10) #AU
 
         for b_ffp in bs_ffp:
+
+            np.random.seed(12)
 
             for j in range(n_phis_bp):
 
