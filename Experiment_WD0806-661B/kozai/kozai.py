@@ -6,6 +6,7 @@ from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 def make_triple_system(m_star=0.58|units.MSun, m_bp=0.1|units.MJupiter, m_ffp=7.5|units.MJupiter, a_star_bp=1.0|units.AU, a_star_ffp=1540.5|units.AU, e_star_bp=0.0, e_star_ffp=0.998, om_star_bp=0.0, om_star_ffp=0.0, inc=0.0):
 
@@ -129,6 +130,25 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
     print '\nBINARIES AT END:'
     print code.binaries
 
+    # m_star = 0.58 | units.MSun
+    # m_bp = 1.188889 | units.MJupiter
+    # m_ffp = 7.5|units.MJupiter
+    #
+    # binnn = new_binary_from_orbital_elements(m_star, m_bp, sma_star_bp, ecc_star_bp, 0.0, inc_star_bp, 0.0, ap_star_bp, G=units.constants.G)
+    # binnn2 = new_binary_from_orbital_elements(m_star, m_ffp, sma_star_ffp, ecc_star_ffp, 0.0, inc_star_ffp, 0.0, ap_star_ffp, G=units.constants.G)
+    # print '\nX:'
+    # print xs
+    # print (binnn[1].x-binnn[0].x).as_quantity_in(units.AU)
+    # print (binnn2[1].x-binnn2[0].x).as_quantity_in(units.AU)
+    # print '\nY:'
+    # print ys
+    # print (binnn[1].y-binnn[0].y).as_quantity_in(units.AU)
+    # print (binnn2[1].y-binnn2[0].y).as_quantity_in(units.AU)
+    # print '\nZ:'
+    # print zs
+    # print (binnn[1].z-binnn[0].y).as_quantity_in(units.AU)
+    # print (binnn2[1].z-binnn2[0].y).as_quantity_in(units.AU)
+
     # fig=plt.figure()
     # plt.plot(times_array.value_in(units.yr), g_in_array)
     # plt.plot(times_array.value_in(units.yr), g1_in_array)
@@ -179,50 +199,87 @@ def plot_trajectory(x, y, fout):
 
     plt.close()
 
-def plot_function(times_array, e_array, a_array, g_array, i_array):
+def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout):
 
-    figure = plt.figure(figsize=(10,13))
+    #BP
+    figure = plt.figure(figsize=(25,15))
     N_subplots = 4
 
-    plot_e_in = figure.add_subplot(N_subplots,1,1)
-    plot_i_tot = figure.add_subplot(N_subplots,1,2)
-    plot_e_in_g_in = figure.add_subplot(N_subplots,1,3)
-    plot_a_in = figure.add_subplot(N_subplots,1,4)
+    plot_e = figure.add_subplot(N_subplots,1,1)
+    plot_i = figure.add_subplot(N_subplots,1,2)
+    plot_g = figure.add_subplot(N_subplots,1,3)
+    plot_a = figure.add_subplot(N_subplots,1,4)
 
     for i,ti in enumerate(times_array[:]):
-        times_array_yr = times_array[i].value_in(units.yr)
-        a_in_array_AU = a_in_array[i].value_in(units.AU)
-        plot_e_in.plot(times_array_yr,e_in_array[i])
-        plot_i_tot.plot(times_array_yr,i_tot_array[i]*180.0/np.pi)
-        plot_e_in_g_in.plot(np.cos(g_in_array[i]),e_in_array[i])
-        plot_a_in.plot(times_array_yr,g_in_array[i])
+        times_array_yr = times_array[i]
+        plot_e.scatter(times_array_yr,e_array[i,0],s=1, lw=0)
+        plot_i.scatter(times_array_yr,i_array[i,0]*180.0/np.pi,s=1, lw=0)
+        plot_g.scatter(times_array_yr,g_array[i,0],s=1, lw=0)
+        plot_a.scatter(times_array_yr,math.log10(a_array[i,0]),s=1, lw=0)
 
-    t_max_yr = times_array_yr
-    plot_e_in.set_xlim(0,t_max_yr)
-    plot_i_tot.set_xlim(0,t_max_yr)
+    t_max_yr = max(times_array)
+    plot_e.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
+    plot_a.set_xlim(0,t_max_yr)
 
-    # plot_i_tot.set_ylim(0.9*min(i_tot_array[0]*180.0/np.pi),1.1*max(i_tot_array[0]*180.0/np.pi))
+    plot_e.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
+    plot_a.set_xlabel('$t/\mathrm{yr}$')
 
-    plot_e_in.set_xlabel('$t/\mathrm{yr}$')
-    plot_i_tot.set_xlabel('$t/\mathrm{yr}$')
-    plot_e_in_g_in.set_xlabel('$\cos(g_\mathrm{in})$')
-
-    plot_e_in.set_ylabel('$e_\mathrm{in}$')
-    plot_i_tot.set_ylabel('$i_\mathrm{tot} ({}^\circ)$')
-    plot_e_in_g_in.set_ylabel('$e_\mathrm{in}$')
-    plot_a_in.set_ylabel('$g_\mathrm{in}$')
+    plot_e.set_ylabel('$e_\mathrm{BP}$')
+    plot_i.set_ylabel('$i_\mathrm{BP} ({}^\circ)$')
+    plot_g.set_ylabel('$g_\mathrm{BP} ({}^\circ)$')
+    plot_a.set_ylabel('$\log{(a_\mathrm{BP})} (\mathrm{AU})$')
     figure.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.15)
 
-    plt.show()
+    plt.savefig('./orbital_elements_bp_'+fout+'.png')
+    plt.close()
+
+    #FFP
+    figure = plt.figure(figsize=(25,15))
+    N_subplots = 4
+
+    plot_e = figure.add_subplot(N_subplots,1,1)
+    plot_i = figure.add_subplot(N_subplots,1,2)
+    plot_g = figure.add_subplot(N_subplots,1,3)
+    plot_a = figure.add_subplot(N_subplots,1,4)
+
+    for i,ti in enumerate(times_array[:]):
+        times_array_yr = times_array[i]
+        plot_e.scatter(times_array_yr,e_array[i,1],s=1, lw=0)
+        plot_i.scatter(times_array_yr,i_array[i,1]*180.0/np.pi,s=1, lw=0)
+        plot_g.scatter(times_array_yr,g_array[i,1],s=1, lw=0)
+        plot_a.scatter(times_array_yr,math.log10(a_array[i,1]),s=1, lw=0)
+
+    t_max_yr = max(times_array)
+    plot_e.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
+    plot_a.set_xlim(0,t_max_yr)
+
+    plot_e.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
+    plot_a.set_xlabel('$t/\mathrm{yr}$')
+
+    plot_e.set_ylabel('$e_\mathrm{FFP}$')
+    plot_i.set_ylabel('$i_\mathrm{FFP} ({}^\circ)$')
+    plot_g.set_ylabel('$g_\mathrm{FFP} ({}^\circ)$')
+    plot_a.set_ylabel('$\log{(a_\mathrm{BP})} (\mathrm{AU})$')
+    figure.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.15)
+
+    plt.savefig('./orbital_elements_ffp_'+fout+'.png')
 
 def run(m_bp=0.1, e_star_bp=0.0, e_star_ffp=0.998, sma_star_bp=1.0, sma_star_ffp=1540.5, om_star_bp=0.0, om_star_ffp=0.0, incl=0.0, dt_snapshots=0.000065, endtime=0.065, fout='kozai_out.dat'):
 
     ### set parameters
-    m_star=0.58|units.MSun
-    m_bp=m_bp|units.MJupiter
-    m_ffp=7.5|units.MJupiter
-    a_star_bp=sma_star_bp|units.AU
-    a_star_ffp=sma_star_ffp|units.AU
+    m_star = 0.58|units.MSun
+    m_bp = m_bp|units.MJupiter
+    m_ffp = 7.5|units.MJupiter
+    a_star_bp = sma_star_bp|units.AU
+    a_star_ffp = sma_star_ffp|units.AU
 
     ### initial conditions for binary
     binaries = make_triple_system(m_star,m_bp,m_ffp,a_star_bp,a_star_ffp,e_star_bp,e_star_ffp,om_star_bp,om_star_ffp,incl)
@@ -233,15 +290,8 @@ def run(m_bp=0.1, e_star_bp=0.0, e_star_ffp=0.998, sma_star_bp=1.0, sma_star_ffp
 
     times_array, e_array, a_array, g_array, i_array, x, y, z = evolve_triple_system(binaries, end_time, output_time_step, fout)
 
-    plot_trajectory(x, y, fout)
-    #plot_function(times_array, e_array, a_array, g_array, i_array)
-
-    # fig = plt.figure()
-    # plt.plot(times_array, e_array[:,0])
-    # plt.plot(times_array, e_array[:,1])
-    # plt.show()
-    # plt.close()
-
+    # plot_trajectory(x, y, fout)
+    plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
 
 if __name__ in ('__main__','__plot__'):
 
@@ -256,17 +306,19 @@ if __name__ in ('__main__','__plot__'):
     incl = 0.0
     f = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02'
 
+    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6.5, endtime=65000.0, fout=f)
+
     #This one is at -300 and seem to be going further
-    # m_bp = 1.188889
-    # e_star_ffp = 0.9979511755073169
-    # e_star_bp = 0.004490745565236455
-    # sma_star_ffp = 1411.8796326270449
-    # sma_star_bp = 0.9992253527307187
-    # # om_star_ffp = -8.07219911366
-    # # om_star_bp = -47.4605952228
+    m_bp = 1.188889
+    e_star_ffp = 0.9979511755073169
+    e_star_bp = 0.004490745565236455
+    sma_star_ffp = 1411.8796326270449
+    sma_star_bp = 0.9992253527307187
+    om_star_ffp = -8.07219911366
+    om_star_bp = -47.4605952228
     # om_star_ffp = 0.0
     # om_star_bp = -8.07219911366+47.4605952228
-    # incl = 180.0
-    # f = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
+    incl = 180.0
+    f = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
 
-    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6500000.0, endtime=65000000000.0, fout=f)
+    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6.5, endtime=65000.0, fout=f)
