@@ -4,11 +4,10 @@ from amuse.units import units,constants,quantities
 from amuse.units.optparse import OptionParser
 from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
+import numpy as np
 
-import numpy
-
-def make_triple_system(m1=0.58|units.MSun, m2=7.5|units.MJupiter, m3=0.1|units.MJupiter, a1=1540.5|units.AU, a2=1.0|units.AU, e1=0.998, e2=0.0, inc=0.0, om1=0.0, om2=0.0):
+def make_triple_system(m_star=0.58|units.MSun, m_bp=0.1|units.MJupiter, m_ffp=7.5|units.MJupiter, a_star_bp=1.0|units.AU, a_star_ffp=1540.5|units.AU, e_star_bp=0.0, e_star_ffp=0.998, om_star_bp=0.0, om_star_ffp=0.0, inc=0.0):
 
     binaries = Particles(2)
     inner_stars = Particles(2)
@@ -19,70 +18,39 @@ def make_triple_system(m1=0.58|units.MSun, m2=7.5|units.MJupiter, m3=0.1|units.M
     binaries[1].child1 = outer_stars[0]
     binaries[1].child2 = outer_stars[1]
 
-    binaries[0].child1.mass = m1
-    binaries[0].child2.mass = m2
-    binaries[1].child1.mass = m3
+    binaries[0].child1.mass = m_star
+    binaries[0].child2.mass = m_bp
+    binaries[1].child1.mass = m_ffp
 
-    binaries[0].semimajor_axis = a1
-    binaries[1].semimajor_axis = a2
+    binaries[0].semimajor_axis = a_star_bp
+    binaries[1].semimajor_axis = a_star_ffp
 
-    binaries[0].eccentricity = e1
-    binaries[1].eccentricity = e2
-    binaries[0].argument_of_pericenter = om1*numpy.pi/180.0
-    binaries[1].argument_of_pericenter = om2*numpy.pi/180.0
+    binaries[0].eccentricity = e_star_bp
+    binaries[1].eccentricity = e_star_ffp
+    binaries[0].argument_of_pericenter = om_star_bp*np.pi/180.0
+    binaries[1].argument_of_pericenter = om_star_ffp*np.pi/180.0
     binaries[0].longitude_of_ascending_node = 0.0
     binaries[1].longitude_of_ascending_node = 0.0
 
-    binaries[0].inclination = inc*numpy.pi/180.0 ### this is the inclination between the orbital planes of binaries[0] and binaries[1] ###
+    binaries[0].inclination = inc*np.pi/180.0 ### this is the inclination between the orbital planes of binaries[0] and binaries[1] ###
     binaries[1].inclination = 0.0
-
-    # binaries[0].child1.envelope_mass = 0.0 | units.MSun
-    # binaries[0].child2.envelope_mass = 0.0 | units.MSun
-    # binaries[1].child1.envelope_mass = 0.0 | units.MSun
-    # binaries[0].child1.radius = 1.0 | units.RSun
-    # binaries[0].child2.radius = 1.0 | units.RSun
-    # binaries[1].child1.radius = 1.0 | units.RSun
-    # binaries[0].child1.luminosity = 1.0 | units.LSun
-    # binaries[0].child2.luminosity = 1.0 | units.LSun
-    # binaries[1].child1.luminosity = 1.0 | units.LSun
-    # binaries[1].child1.envelope_radius = 0.0 | units.RSun
-    # binaries[0].child1.envelope_radius = 0.0 | units.RSun
-    # binaries[0].child2.envelope_radius = 0.0 | units.RSun
-    # binaries[0].child1.apsidal_motion_constant = 0.1
-    # binaries[0].child2.apsidal_motion_constant = 0.1
-    # binaries[1].child1.apsidal_motion_constant = 0.1
-    # binaries[0].child1.gyration_radius = 0.1
-    # binaries[0].child2.gyration_radius = 0.1
-    # binaries[1].child1.gyration_radius = 0.1
-    # binaries[0].child1.stellar_type = 1
-    # binaries[0].child2.stellar_type = 1
-    # binaries[1].child1.stellar_type = 1
-    # binaries[0].child1.spin_angular_frequency = 1.0e3 | 1.0/units.yr
-    # binaries[0].child2.spin_angular_frequency = 1.0e3 | 1.0/units.yr
-    # binaries[1].child1.spin_angular_frequency = 1.0e3 | 1.0/units.yr
-
-    # binaries[0].child1.mass_transfer_rate = -1.0e-6 | units.MSun / units.yr
-    # binaries[0].mass_transfer_accretion_parameter = 1.0
-    # binaries[1].mass_transfer_accretion_parameter = 1.0
-    # binaries[0].mass_transfer_angular_momentum_loss_parameter = 0.0
-    # binaries[1].mass_transfer_angular_momentum_loss_parameter = 0.0
 
     return binaries
 
 def give_position(semimajor_axis, eccentricity, inclination, argument_of_periapsis):
 
-    inclination = numpy.radians(inclination)
-    argument_of_periapsis = numpy.radians(argument_of_periapsis)
+    inclination = np.radians(inclination)
+    argument_of_periapsis = np.radians(argument_of_periapsis)
 
     #Supposing this:
     #longitude_of_the_ascending_node = 0.0
     #true_anomaly = 0.0
 
-    cos_inclination = numpy.cos(inclination)
-    sin_inclination = numpy.sin(inclination)
+    cos_inclination = np.cos(inclination)
+    sin_inclination = np.sin(inclination)
 
-    cos_arg_per = numpy.cos(argument_of_periapsis)
-    sin_arg_per = numpy.sin(argument_of_periapsis)
+    cos_arg_per = np.cos(argument_of_periapsis)
+    sin_arg_per = np.sin(argument_of_periapsis)
 
     ### alpha is a unit vector directed along the line of node ###
     alphax = cos_arg_per
@@ -104,174 +72,201 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
     code.parameters.equations_of_motion_specification = 0
     code.parameters.f_quad = 1.0
     code.parameters.f_oct = 1.0
-    code.parameters.f_mass_transfer = 0.0
-    code.parameters.f_1PN_in = 0.0
-    code.parameters.f_1PN_out = 0.0
-    code.parameters.f_25PN_in = 0.0
-    code.parameters.f_25PN_out = 0.0
+    code.parameters.f_mass_transfer = 0.0 #leave off
+    code.parameters.f_1PN_in = 0.0 #general relativity specifications
+    code.parameters.f_1PN_out = 0.0 #general relativity specifications
+    code.parameters.f_25PN_in = 0.0 #general relativity specifications
+    code.parameters.f_25PN_out = 0.0 #general relativity specifications
 
     ### quantities later used for plotting ###
-    times_array = quantities.AdaptingVectorQuantity()
     x = quantities.AdaptingVectorQuantity()
     y = quantities.AdaptingVectorQuantity()
     z = quantities.AdaptingVectorQuantity()
-    a_in_array = quantities.AdaptingVectorQuantity()
-    e_in_array = []
-    i_tot_array = []
-    g_in_array = []
-    a1_in_array = quantities.AdaptingVectorQuantity()
-    e1_in_array = []
-    i1_tot_array = []
-    g1_in_array = []
 
-    mc = 1
+    times_array = []
+    e_array = []
+    a_array = []
+    g_array = []
+    i_array = []
 
+    print '\nBINARIES AT START:'
     print code.binaries
 
-    time = 0.0 | units.Myr
+    time = 0.0 | units.yr
     while (time < end_time):
 
         code.evolve_model(time)
         time += output_time_step
 
-        inc = code.binaries[0].inclination
-        inc1 = code.binaries[1].inclination
-        ecc = code.binaries[0].eccentricity
-        ecc1 = code.binaries[1].eccentricity
-        sma = code.binaries[0].semimajor_axis
-        sma1 = code.binaries[1].semimajor_axis
-        ap = code.binaries[0].argument_of_pericenter
-        ap1 = code.binaries[1].argument_of_pericenter
+        ecc_star_bp = code.binaries[0].eccentricity
+        ecc_star_ffp = code.binaries[1].eccentricity
+        sma_star_bp = code.binaries[0].semimajor_axis
+        sma_star_ffp = code.binaries[1].semimajor_axis
+        ap_star_bp = code.binaries[0].argument_of_pericenter
+        ap_star_ffp = code.binaries[1].argument_of_pericenter
+        inc_star_bp = code.binaries[0].inclination
+        inc_star_ffp = code.binaries[1].inclination
 
-        times_array.append(time)
-        e_in_array.append(ecc)
-        a_in_array.append(sma)
-        g_in_array.append(ap)
-        i_tot_array.append(inc)
-        e1_in_array.append(ecc1)
-        a1_in_array.append(sma1)
-        g1_in_array.append(ap1)
-        i1_tot_array.append(inc1)
+        # print ecc_star_bp, ecc_star_ffp, sma_star_bp, sma_star_ffp, ap_star_bp, ap_star_ffp, inc_star_bp, inc_star_ffp
 
-        print code.binaries
+        times_array.append(time.value_in(units.yr))
+        e_array.append([ecc_star_bp, ecc_star_ffp])
+        a_array.append([sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU)])
+        g_array.append([ap_star_bp, ap_star_ffp])
+        i_array.append([inc_star_bp, inc_star_ffp])
 
-        xx,yy,zz = give_position(sma, ecc, inc, ap)
-        xx1,yy1,zz1 = give_position(sma1, ecc1, inc1, ap1)
+        x_star_bp,y_star_bp,z_star_bp = give_position(sma_star_bp, ecc_star_bp, inc_star_bp, ap_star_bp)
+        x_star_ffp,y_star_ffp,z_star_ffp = give_position(sma_star_ffp, ecc_star_ffp, inc_star_ffp, ap_star_ffp)
 
-        xs = [0.0, xx.value_in(units.AU), xx1.value_in(units.AU)] |units.AU
-        ys = [0.0, yy.value_in(units.AU), yy1.value_in(units.AU)] |units.AU
-        zs = [0.0, zz.value_in(units.AU), zz1.value_in(units.AU)] |units.AU
-
-        # print xs.value_in(units.AU)
-        # print ys.value_in(units.AU)
-        # print zs.value_in(units.AU)
+        xs = [0.0, x_star_bp.value_in(units.AU), x_star_ffp.value_in(units.AU)] |units.AU
+        ys = [0.0, y_star_bp.value_in(units.AU), y_star_ffp.value_in(units.AU)] |units.AU
+        zs = [0.0, z_star_bp.value_in(units.AU), z_star_ffp.value_in(units.AU)] |units.AU
 
         x.append(xs)
         y.append(ys)
         z.append(zs)
 
-        if (mc == 3):
-            code.stop()
-        mc += 1
+    print '\nBINARIES AT END:'
+    print code.binaries
 
-    e_in_array = numpy.array(e_in_array)
-    g_in_array = numpy.array(g_in_array)
-    i_tot_array = numpy.array(i_tot_array)
+    # fig=plt.figure()
+    # plt.plot(times_array.value_in(units.yr), g_in_array)
+    # plt.plot(times_array.value_in(units.yr), g1_in_array)
+    # plt.show()
+    # plt.close()
 
-    return times_array,a_in_array,e_in_array,g_in_array,i_tot_array,x,y,z
+    times_array = np.array(times_array)
+    e_array = np.array(e_array)
+    a_array = np.array(a_array)
+    g_array = np.array(g_array)
+    i_array = np.array(i_array)
 
-def plot_trajectory(x, y):
+    return times_array,e_array,a_array,g_array,i_array,x,y,z
 
-    f = pyplot.figure(figsize=(70,30))
+def plot_trajectory(x, y, fout):
+
+    f = plt.figure(figsize=(70,30))
 
     x_star = (x[:,0]-x[:,0]).value_in(units.AU)
-    x_ffp = (x[:,1]-x[:,0]).value_in(units.AU)
-    x_planet = (x[:,2]-x[:,0]).value_in(units.AU)
+    x_planet = (x[:,1]-x[:,0]).value_in(units.AU)
+    x_ffp = (x[:,2]-x[:,0]).value_in(units.AU)
 
     y_star = (y[:,0]-y[:,0]).value_in(units.AU)
-    y_ffp = (y[:,1]-y[:,0]).value_in(units.AU)
-    y_planet = (y[:,2]-y[:,0]).value_in(units.AU)
+    y_planet = (y[:,1]-y[:,0]).value_in(units.AU)
+    y_ffp = (y[:,2]-y[:,0]).value_in(units.AU)
 
-    pyplot.plot(x_star,y_star,c='y',label='Star')
-    pyplot.scatter(x_star[0],y_star[0],c='black',marker='*', lw = 0)
-    pyplot.scatter(x_star[-1],y_star[-1],c='y',marker='*', lw = 0)
+    plt.plot(x_star,y_star,c='y',label='Star')
+    plt.scatter(x_star[0],y_star[0],c='black',marker='*', lw = 0)
+    plt.scatter(x_star[-1],y_star[-1],c='y',marker='*', lw = 0)
 
-    pyplot.plot(x_ffp,y_ffp,c='c',label='FFP', lw = 2)
-    pyplot.scatter(x_ffp[0],y_ffp[0],c='black', lw = 0)
-    pyplot.scatter(x_ffp[-1],y_ffp[-1],c='c', lw = 0)
+    plt.plot(x_ffp,y_ffp,c='c',label='FFP', lw = 2)
+    plt.scatter(x_ffp[0],y_ffp[0],c='black', lw = 0)
+    plt.scatter(x_ffp[-1],y_ffp[-1],c='c', lw = 0)
 
-    pyplot.plot(x_planet,y_planet,c='m',label='BP',alpha=0.5)
-    pyplot.scatter(x_planet[0],y_planet[0],c='black', lw = 0)
-    pyplot.scatter(x_planet[-1],y_planet[-1],c='m', lw = 0)
+    plt.plot(x_planet,y_planet,c='m',label='BP',alpha=0.5)
+    plt.scatter(x_planet[0],y_planet[0],c='black', lw = 0)
+    plt.scatter(x_planet[-1],y_planet[-1],c='m', lw = 0)
 
-    pyplot.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
-    pyplot.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
+    plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--', alpha=0.5)
+    plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--', alpha=0.5)
 
-    pyplot.title('Trajectory FFP', fontsize=40)
-    pyplot.axes().set_aspect('equal', 'datalim')
-    pyplot.xlabel('$x$ (AU)', fontsize=40)
-    pyplot.ylabel('$y$ (AU)', fontsize=40)
-    pyplot.legend(fontsize=40)
-    pyplot.savefig('./kozai_trajectory.png')
+    plt.title('Trajectory FFP', fontsize=40)
+    plt.axes().set_aspect('equal', 'datalim')
+    plt.xlabel('$x$ (AU)', fontsize=40)
+    plt.ylabel('$y$ (AU)', fontsize=40)
+    plt.legend(fontsize=40)
+    plt.savefig('./trajectory_'+fout+'.png')
 
-    pyplot.close()
+    plt.close()
 
-def get_omega_stat(omega):
-  """
-  statistics of the time evolution of omega
-  """
-  o_min = min(omega)
-  o_max = max(omega)
-  o_med = numpy.median(omega)
-  o_mean = numpy.mean(omega)
-  return o_min, o_max, o_med, o_mean
+def plot_function(times_array, e_array, a_array, g_array, i_array):
 
-def run(m_bp=0.1, e_star_ffp=0.998, e_star_bp=0.0, sma_star_ffp=1540.5, sma_star_bp=1.0, incl=0.0, om1=0.0, om2=0.0, dt_snapshots=0.000065, endtime=0.065, fout='kozai_out.dat',mx=5.0):
+    figure = plt.figure(figsize=(10,13))
+    N_subplots = 4
+
+    plot_e_in = figure.add_subplot(N_subplots,1,1)
+    plot_i_tot = figure.add_subplot(N_subplots,1,2)
+    plot_e_in_g_in = figure.add_subplot(N_subplots,1,3)
+    plot_a_in = figure.add_subplot(N_subplots,1,4)
+
+    for i,ti in enumerate(times_array[:]):
+        times_array_yr = times_array[i].value_in(units.yr)
+        a_in_array_AU = a_in_array[i].value_in(units.AU)
+        plot_e_in.plot(times_array_yr,e_in_array[i])
+        plot_i_tot.plot(times_array_yr,i_tot_array[i]*180.0/np.pi)
+        plot_e_in_g_in.plot(np.cos(g_in_array[i]),e_in_array[i])
+        plot_a_in.plot(times_array_yr,g_in_array[i])
+
+    t_max_yr = times_array_yr
+    plot_e_in.set_xlim(0,t_max_yr)
+    plot_i_tot.set_xlim(0,t_max_yr)
+
+    # plot_i_tot.set_ylim(0.9*min(i_tot_array[0]*180.0/np.pi),1.1*max(i_tot_array[0]*180.0/np.pi))
+
+    plot_e_in.set_xlabel('$t/\mathrm{yr}$')
+    plot_i_tot.set_xlabel('$t/\mathrm{yr}$')
+    plot_e_in_g_in.set_xlabel('$\cos(g_\mathrm{in})$')
+
+    plot_e_in.set_ylabel('$e_\mathrm{in}$')
+    plot_i_tot.set_ylabel('$i_\mathrm{tot} ({}^\circ)$')
+    plot_e_in_g_in.set_ylabel('$e_\mathrm{in}$')
+    plot_a_in.set_ylabel('$g_\mathrm{in}$')
+    figure.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.15)
+
+    plt.show()
+
+def run(m_bp=0.1, e_star_bp=0.0, e_star_ffp=0.998, sma_star_bp=1.0, sma_star_ffp=1540.5, om_star_bp=0.0, om_star_ffp=0.0, incl=0.0, dt_snapshots=0.000065, endtime=0.065, fout='kozai_out.dat'):
 
     ### set parameters
-    m1=0.58|units.MSun
-    m2=7.5|units.MJupiter
-    m3=m_bp|units.MJupiter
-    e1=e_star_ffp
-    e2=e_star_bp
-    a1=sma_star_ffp|units.AU
-    a2=sma_star_bp|units.AU
+    m_star=0.58|units.MSun
+    m_bp=m_bp|units.MJupiter
+    m_ffp=7.5|units.MJupiter
+    a_star_bp=sma_star_bp|units.AU
+    a_star_ffp=sma_star_ffp|units.AU
 
     ### initial conditions for binary
-    binaries = make_triple_system(m1,m2,m3,a1,a2,e1,e2,incl,om1,om2)
+    binaries = make_triple_system(m_star,m_bp,m_ffp,a_star_bp,a_star_ffp,e_star_bp,e_star_ffp,om_star_bp,om_star_ffp,incl)
 
     ### solve equations of motions for the system in the octuple approximation
-    output_time_step = dt_snapshots | units.Myr
-    end_time = endtime | units.Myr
+    output_time_step = dt_snapshots | units.yr
+    end_time = endtime | units.yr
 
-    times_array_o,a_in_array_o,e_in_array_o,g_in_array_o,i_tot_array_o,x,y,z = evolve_triple_system(binaries, end_time, output_time_step, fout)
+    times_array, e_array, a_array, g_array, i_array, x, y, z = evolve_triple_system(binaries, end_time, output_time_step, fout)
 
-    plot_trajectory(x, y)
+    plot_trajectory(x, y, fout)
+    #plot_function(times_array, e_array, a_array, g_array, i_array)
+
+    # fig = plt.figure()
+    # plt.plot(times_array, e_array[:,0])
+    # plt.plot(times_array, e_array[:,1])
+    # plt.show()
+    # plt.close()
 
 
 if __name__ in ('__main__','__plot__'):
 
-    #This one starts down, is similar to next one
-    m1 = 1.188889
-    e_star_ffp1 = 0.9982296497127007
-    e_star_bp1 = 0.002831325835564035
-    sma_star_ffp1 = 2318.9515580915295
-    sma_star_bp1 = 1.0000772686971517
-    inc1 = 0.0
-    om11 = -12.3821332867
-    om21 = -13.1687421576
-    f1 = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02.dat'
+    # #This one starts down, is similar to next one
+    m_bp = 1.188889
+    e_star_bp = 0.002831325835564035
+    e_star_ffp = 0.9982296497127007
+    sma_star_bp = 1.0000772686971517
+    sma_star_ffp = 2318.9515580915295
+    om_star_bp = -13.1687421576
+    om_star_ffp = -12.3821332867
+    incl = 0.0
+    f = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02'
 
     #This one is at -300 and seem to be going further
-    m2 = 1.188889
-    e_star_ffp2 = 0.9979511755073169
-    e_star_bp2 = 0.004490745565236455
-    sma_star_ffp2 = 1411.8796326270449
-    sma_star_bp2 = 0.9992253527307187
-    inc2 = 180.0
-    om12 = -8.07219911366
-    om22 = -47.4605952228
-    f2 = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02.dat'
+    # m_bp = 1.188889
+    # e_star_ffp = 0.9979511755073169
+    # e_star_bp = 0.004490745565236455
+    # sma_star_ffp = 1411.8796326270449
+    # sma_star_bp = 0.9992253527307187
+    # # om_star_ffp = -8.07219911366
+    # # om_star_bp = -47.4605952228
+    # om_star_ffp = 0.0
+    # om_star_bp = -8.07219911366+47.4605952228
+    # incl = 180.0
+    # f = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
 
-    run(m1, e_star_ffp1, e_star_bp1, sma_star_ffp1, sma_star_bp1, inc1, om11, om21, dt_snapshots=0.000065, endtime=0.065, fout=f1,mx=5.0)
-    #run(m2, e_star_ffp2, e_star_bp2, sma_star_ffp2, sma_star_bp2, inc2, om12, om22, dt_snapshots=0.000065, endtime=0.0065, fout=f2,mx=5.0)
+    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6500000.0, endtime=65000000000.0, fout=f)
