@@ -79,21 +79,29 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
     code.parameters.f_25PN_in = 0.0 #general relativity specifications
     code.parameters.f_25PN_out = 0.0 #general relativity specifications
 
-    ### quantities later used for plotting ###
-    x = quantities.AdaptingVectorQuantity()
-    y = quantities.AdaptingVectorQuantity()
-    z = quantities.AdaptingVectorQuantity()
-
+    #Quantities later used for plotting
     times_array = []
     e_array = []
     a_array = []
     g_array = []
     i_array = []
 
-    print '\nBINARIES AT START:'
-    print code.binaries
-
     time = 0.0 | units.yr
+    ecc_star_bp = code.binaries[0].eccentricity
+    ecc_star_ffp = code.binaries[1].eccentricity
+    sma_star_bp = code.binaries[0].semimajor_axis
+    sma_star_ffp = code.binaries[1].semimajor_axis
+    ap_star_bp = code.binaries[0].argument_of_pericenter
+    ap_star_ffp = code.binaries[1].argument_of_pericenter
+    inc_star_bp = code.binaries[0].inclination
+    inc_star_ffp = code.binaries[1].inclination
+
+    times_array.append(time.value_in(units.yr))
+    e_array.append([ecc_star_bp, ecc_star_ffp])
+    a_array.append([sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU)])
+    g_array.append([ap_star_bp, ap_star_ffp])
+    i_array.append([inc_star_bp, inc_star_ffp])
+
     while (time < end_time):
 
         code.evolve_model(time)
@@ -108,52 +116,11 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
         inc_star_bp = code.binaries[0].inclination
         inc_star_ffp = code.binaries[1].inclination
 
-        # print ecc_star_bp, ecc_star_ffp, sma_star_bp, sma_star_ffp, ap_star_bp, ap_star_ffp, inc_star_bp, inc_star_ffp
-
         times_array.append(time.value_in(units.yr))
         e_array.append([ecc_star_bp, ecc_star_ffp])
         a_array.append([sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU)])
         g_array.append([ap_star_bp, ap_star_ffp])
         i_array.append([inc_star_bp, inc_star_ffp])
-
-        x_star_bp,y_star_bp,z_star_bp = give_position(sma_star_bp, ecc_star_bp, inc_star_bp, ap_star_bp)
-        x_star_ffp,y_star_ffp,z_star_ffp = give_position(sma_star_ffp, ecc_star_ffp, inc_star_ffp, ap_star_ffp)
-
-        xs = [0.0, x_star_bp.value_in(units.AU), x_star_ffp.value_in(units.AU)] |units.AU
-        ys = [0.0, y_star_bp.value_in(units.AU), y_star_ffp.value_in(units.AU)] |units.AU
-        zs = [0.0, z_star_bp.value_in(units.AU), z_star_ffp.value_in(units.AU)] |units.AU
-
-        x.append(xs)
-        y.append(ys)
-        z.append(zs)
-
-    print '\nBINARIES AT END:'
-    print code.binaries
-
-    # m_star = 0.58 | units.MSun
-    # m_bp = 1.188889 | units.MJupiter
-    # m_ffp = 7.5|units.MJupiter
-    #
-    # binnn = new_binary_from_orbital_elements(m_star, m_bp, sma_star_bp, ecc_star_bp, 0.0, inc_star_bp, 0.0, ap_star_bp, G=units.constants.G)
-    # binnn2 = new_binary_from_orbital_elements(m_star, m_ffp, sma_star_ffp, ecc_star_ffp, 0.0, inc_star_ffp, 0.0, ap_star_ffp, G=units.constants.G)
-    # print '\nX:'
-    # print xs
-    # print (binnn[1].x-binnn[0].x).as_quantity_in(units.AU)
-    # print (binnn2[1].x-binnn2[0].x).as_quantity_in(units.AU)
-    # print '\nY:'
-    # print ys
-    # print (binnn[1].y-binnn[0].y).as_quantity_in(units.AU)
-    # print (binnn2[1].y-binnn2[0].y).as_quantity_in(units.AU)
-    # print '\nZ:'
-    # print zs
-    # print (binnn[1].z-binnn[0].y).as_quantity_in(units.AU)
-    # print (binnn2[1].z-binnn2[0].y).as_quantity_in(units.AU)
-
-    # fig=plt.figure()
-    # plt.plot(times_array.value_in(units.yr), g_in_array)
-    # plt.plot(times_array.value_in(units.yr), g1_in_array)
-    # plt.show()
-    # plt.close()
 
     times_array = np.array(times_array)
     e_array = np.array(e_array)
@@ -161,43 +128,7 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
     g_array = np.array(g_array)
     i_array = np.array(i_array)
 
-    return times_array,e_array,a_array,g_array,i_array,x,y,z
-
-def plot_trajectory(x, y, fout):
-
-    f = plt.figure(figsize=(70,30))
-
-    x_star = (x[:,0]-x[:,0]).value_in(units.AU)
-    x_planet = (x[:,1]-x[:,0]).value_in(units.AU)
-    x_ffp = (x[:,2]-x[:,0]).value_in(units.AU)
-
-    y_star = (y[:,0]-y[:,0]).value_in(units.AU)
-    y_planet = (y[:,1]-y[:,0]).value_in(units.AU)
-    y_ffp = (y[:,2]-y[:,0]).value_in(units.AU)
-
-    plt.plot(x_star,y_star,c='y',label='Star')
-    plt.scatter(x_star[0],y_star[0],c='black',marker='*', lw = 0)
-    plt.scatter(x_star[-1],y_star[-1],c='y',marker='*', lw = 0)
-
-    plt.plot(x_ffp,y_ffp,c='c',label='FFP', lw = 2)
-    plt.scatter(x_ffp[0],y_ffp[0],c='black', lw = 0)
-    plt.scatter(x_ffp[-1],y_ffp[-1],c='c', lw = 0)
-
-    plt.plot(x_planet,y_planet,c='m',label='BP',alpha=0.5)
-    plt.scatter(x_planet[0],y_planet[0],c='black', lw = 0)
-    plt.scatter(x_planet[-1],y_planet[-1],c='m', lw = 0)
-
-    plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--', alpha=0.5)
-    plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--', alpha=0.5)
-
-    plt.title('Trajectory FFP', fontsize=40)
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.xlabel('$x$ (AU)', fontsize=40)
-    plt.ylabel('$y$ (AU)', fontsize=40)
-    plt.legend(fontsize=40)
-    plt.savefig('./trajectory_'+fout+'.png')
-
-    plt.close()
+    return times_array, e_array, a_array, g_array, i_array
 
 def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout):
 
@@ -210,12 +141,12 @@ def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
     plot_g = figure.add_subplot(N_subplots,1,3)
     plot_a = figure.add_subplot(N_subplots,1,4)
 
-    for i,ti in enumerate(times_array[:]):
-        times_array_yr = times_array[i]
-        plot_e.scatter(times_array_yr,e_array[i,0],s=1, lw=0)
-        plot_i.scatter(times_array_yr,i_array[i,0]*180.0/np.pi,s=1, lw=0)
-        plot_g.scatter(times_array_yr,g_array[i,0],s=1, lw=0)
-        plot_a.scatter(times_array_yr,math.log10(a_array[i,0]),s=1, lw=0)
+    plot_e.plot(times_array,e_array[:,0],c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,0]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,0],c='c',lw=2)
+    a_array_subset = a_array[:,0]
+    log10_a_array = [math.log10(aa) for aa in a_array_subset]
+    plot_a.plot(times_array,log10_a_array,c='c',lw=2)
 
     t_max_yr = max(times_array)
     plot_e.set_xlim(0,t_max_yr)
@@ -232,7 +163,7 @@ def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
     plot_i.set_ylabel('$i_\mathrm{BP} ({}^\circ)$')
     plot_g.set_ylabel('$g_\mathrm{BP} ({}^\circ)$')
     plot_a.set_ylabel('$\log{(a_\mathrm{BP})} (\mathrm{AU})$')
-    figure.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.15)
+    figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
     plt.savefig('./orbital_elements_bp_'+fout+'.png')
     plt.close()
@@ -246,12 +177,12 @@ def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
     plot_g = figure.add_subplot(N_subplots,1,3)
     plot_a = figure.add_subplot(N_subplots,1,4)
 
-    for i,ti in enumerate(times_array[:]):
-        times_array_yr = times_array[i]
-        plot_e.scatter(times_array_yr,e_array[i,1],s=1, lw=0)
-        plot_i.scatter(times_array_yr,i_array[i,1]*180.0/np.pi,s=1, lw=0)
-        plot_g.scatter(times_array_yr,g_array[i,1],s=1, lw=0)
-        plot_a.scatter(times_array_yr,math.log10(a_array[i,1]),s=1, lw=0)
+    plot_e.plot(times_array,e_array[:,1],c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,1]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,1],c='c',lw=2)
+    a_array_subset = a_array[:,1]
+    log10_a_array = [math.log10(aa) for aa in a_array_subset]
+    plot_a.plot(times_array,log10_a_array,c='c',lw=2)
 
     t_max_yr = max(times_array)
     plot_e.set_xlim(0,t_max_yr)
@@ -267,8 +198,8 @@ def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
     plot_e.set_ylabel('$e_\mathrm{FFP}$')
     plot_i.set_ylabel('$i_\mathrm{FFP} ({}^\circ)$')
     plot_g.set_ylabel('$g_\mathrm{FFP} ({}^\circ)$')
-    plot_a.set_ylabel('$\log{(a_\mathrm{BP})} (\mathrm{AU})$')
-    figure.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.15)
+    plot_a.set_ylabel('$\log{(a_\mathrm{FFP})} (\mathrm{AU})$')
+    figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
     plt.savefig('./orbital_elements_ffp_'+fout+'.png')
 
@@ -288,9 +219,8 @@ def run(m_bp=0.1, e_star_bp=0.0, e_star_ffp=0.998, sma_star_bp=1.0, sma_star_ffp
     output_time_step = dt_snapshots | units.yr
     end_time = endtime | units.yr
 
-    times_array, e_array, a_array, g_array, i_array, x, y, z = evolve_triple_system(binaries, end_time, output_time_step, fout)
+    times_array, e_array, a_array, g_array, i_array = evolve_triple_system(binaries, end_time, output_time_step, fout)
 
-    # plot_trajectory(x, y, fout)
     plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
 
 if __name__ in ('__main__','__plot__'):
@@ -306,7 +236,7 @@ if __name__ in ('__main__','__plot__'):
     incl = 0.0
     f = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02'
 
-    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6.5, endtime=65000.0, fout=f)
+    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=9750.0, endtime=975000.0, fout=f)
 
     #This one is at -300 and seem to be going further
     m_bp = 1.188889
@@ -316,9 +246,7 @@ if __name__ in ('__main__','__plot__'):
     sma_star_bp = 0.9992253527307187
     om_star_ffp = -8.07219911366
     om_star_bp = -47.4605952228
-    # om_star_ffp = 0.0
-    # om_star_bp = -8.07219911366+47.4605952228
     incl = 180.0
     f = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
 
-    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=6.5, endtime=65000.0, fout=f)
+    run(m_bp, e_star_bp, e_star_ffp, sma_star_bp, sma_star_ffp, om_star_bp, om_star_ffp, incl, dt_snapshots=9750.0, endtime=975000.0, fout=f)
