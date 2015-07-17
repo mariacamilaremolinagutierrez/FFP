@@ -18,4 +18,4 @@ if __name__ in ('__main__', '__plot__'):
     ms_bp = np.linspace(0.1,5.0,n_ms_bp) #MJupiter
 
     for m_bp in ms_bp:
-        os.system('(amuse.sh run.py '+str(m_bp)+' >> log 2>&1 &)')
+        os.system('(amuse.sh run.py '+str(m_bp)+' >> logs/log'+str(m_bp)+'.txt 2>&1 &)')

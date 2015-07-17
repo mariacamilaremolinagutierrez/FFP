@@ -157,6 +157,8 @@ def plot_histograms(parameter, amount, df_name):
 
     if (amount == 10):
         n,b,p = plt.hist(parameter, color = 'c')
+    elif(amount == 100):
+        n,b,p = plt.hist(parameter, bins = int(amount/2.0), color = 'c')
     else:
         n,b,p = plt.hist(parameter, bins = int(amount/20.0), color = 'c')
 
@@ -173,13 +175,15 @@ def plot_histogram_phi(parameter, df_name):
 
     parameter = np.array(parameter)
 
-    n,b,p = plt.hist(parameter, bins = int(len(parameter)/160.0), color = 'c')
+    #n,b,p = plt.hist(parameter, bins = int(len(parameter)/3.0), color = 'c')
+    n,b,p = plt.hist(parameter, bins = 10, color = 'c')
 
     plt.title('Histogram of captures for each '+df_name, fontsize=20)
     plt.xlabel(df_name, fontsize=20)
     plt.ylabel('number of captures', fontsize=20)
-    plt.ylim(0,max(n)*1.05)
-    plt.savefig('./plots/statistics/number_captures_'+df_name+'.png')
+    plt.xlim(0.0,360.0)
+    plt.ylim(0,20)
+    plt.savefig('./plots/statistics/'+df_name+'.png')
     plt.close()
 
 def plot_parameters(parameters_x_axis, parameters_y_axis, parameter_color, df_names, latex_names):
@@ -268,27 +272,37 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     n_bs_ffp_par = len(bs_ffp_par_uniq)
     n_phis_bp_par = len(phis_bp_par_uniq)
 
+    # print np.sort(bs_ffp_par_uniq)
+
     print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
 
     #Number of captures
     #m_bp
     # plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
-    #a_bp
+    # #a_bp
     # plot_histograms(as_bp, n_as_bp_par, 'a_bp')
-    #b_ffp
+    # #b_ffp
     # bs_ffp_over_a_bp = np.array([])
     # for a_bp_par in as_bp_par_uniq:
     #     to_add = np.array(np.array(bs_ffp)[ np.where( df['a_bp']==a_bp_par) ]) / a_bp_par
     #     bs_ffp_over_a_bp = np.concatenate((bs_ffp_over_a_bp, to_add))
     # plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
     #phi_bp
-    # plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
-    # positive_indices = np.where(bs_ffp>=0)
-    # negative_indices = np.where(bs_ffp<0)
-    # plot_histogram_phi(np.array(phis_bp)[positive_indices], 'phi_bp_b_positive')
-    # plot_histogram_phi(np.array(phis_bp)[negative_indices], 'phi_bp_b_negative')
+    plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
 
-    #Plot parameters
+    # for aa in as_bp_par_uniq:
+    #     a_indices = np.where(as_bp == aa)
+    #     plot_histogram_phi(np.array(phis_bp)[a_indices], 'cuts_a/phi_bp_a_'+str(aa))
+
+    bss = [-8.02345000e-01,-7.23987000e-01,-6.86569000e-01,-6.69088000e-01,-6.68259000e-01,-6.62729000e-01,-6.60570000e-01,-6.59457000e-01,6.59457000e-01,6.60570000e-01,6.62729000e-01,6.68259000e-01,6.69088000e-01,6.86569000e-01,7.23987000e-01,8.02345000e-01]
+
+    for bb in bss:
+        b_indices = np.where(bs_ffp == bb)
+        b_subset = np.array(phis_bp)[b_indices]
+        if (len(b_subset)!=0):
+            plot_histogram_phi(b_subset, 'cuts_b/phi_bp_b_'+str(bb))
+
+    # #Plot parameters
     # df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
     # latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
     # plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
@@ -300,8 +314,8 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     # df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
     # latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
     # plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
-
-    #Plot threesomes
+    #
+    # #Plot threesomes
     # df_names = ['m_bp', 'b_ffp', 'a_bp']
     # latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
     # plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
@@ -321,13 +335,13 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
 if __name__ in ('__main__', '__plot__'):
 
-    #Create file with all the runs made per line
+    # #Create file with all the runs made per line
     # create_parameters_and_status_file()
 
     #Read df
     df, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
 
-    #Plottts
+    # #Plottts
     # create_plots_folders()
     #Make statistics plots
     make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp)
