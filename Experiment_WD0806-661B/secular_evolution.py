@@ -122,6 +122,49 @@ def run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_f
 
     return ecc_star_bp, ecc_star_ffp, sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU), np.rad2deg(inc_star_bp), np.rad2deg(inc_star_ffp), np.rad2deg(lan_star_bp), np.rad2deg(lan_star_ffp), np.rad2deg(ap_star_bp), np.rad2deg(ap_star_ffp)
 
+def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file):
+    #first = initial, second = final
+    e_star_ffp_change = (e_sf-e_star_ffp)/e_star_ffp
+    e_star_bp_change = (e_sb-e_star_bp)/e_star_bp
+
+    a_star_ffp_change = (a_sf-a_star_ffp)/a_star_ffp
+    a_star_bp_change = (a_sb-a_star_bp)/a_star_bp
+
+    if (i_star_ffp != 0.0):
+        i_star_ffp_change = (i_sf-i_star_ffp)/i_star_ffp
+        i_sfs = ''
+    else:
+        i_star_ffp_change = (i_sf-i_star_ffp)
+        i_sfs = 'D'
+
+    if (i_star_bp != 0.0):
+        i_star_bp_change = (i_sb-i_star_bp)/i_star_bp
+        i_sbs = ''
+    else:
+        i_star_bp_change = (i_sb-i_star_bp)
+        i_sbs = 'D'
+
+    if (lan_star_ffp != 0.0):
+        lan_star_ffp_change = (lan_sf-lan_star_ffp)/lan_star_ffp
+        lan_sfs = ''
+    else:
+        lan_star_ffp_change = (lan_sf-lan_star_ffp)
+        lan_sfs = 'D'
+
+    if (lan_star_bp != 0.0):
+        lan_star_bp_change = (lan_sb-lan_star_bp)/lan_star_bp
+        lan_sbs = ''
+    else:
+        lan_star_bp_change = (lan_sb-lan_star_bp)
+        lan_sbs = 'D'
+
+    ap_star_ffp_change = (ap_sf-ap_star_ffp)/ap_star_ffp
+    ap_star_bp_change = (ap_sb-ap_star_bp)/ap_star_bp
+
+    fractional_changes_file.write(('%f\t%f\t%f\t%f\t'+i_sfs+'%f\t'+i_sbs+'%f\t'+lan_sfs+'%f\t'+lan_sbs+'%f\t%f\t%f\n')%(e_star_ffp_change,e_star_bp_change,a_star_ffp_change,a_star_bp_change,
+                                                                                                                        i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,
+                                                                                                                        ap_star_ffp_change,ap_star_bp_change))
+
 if __name__ in ('__main__','__plot__'):
 
     endtime = 10000000.0
@@ -134,6 +177,7 @@ if __name__ in ('__main__','__plot__'):
 
     secular_stables_file = open('./secular_stables.txt','w')
     stables_file = open('./stables.txt','r')
+    fractional_changes_file = open('./fractional_changes.txt','w')
 
     #write the header
     line = stables_file.readline()
@@ -166,9 +210,9 @@ if __name__ in ('__main__','__plot__'):
 
         energy_change = float(parts[15].split('\t')[0])
 
-        if (e_star_bp < 1.0 and e_star_ffp < 1.0):
+        print cont
 
-            print cont
+        if (e_star_bp < 1.0 and e_star_ffp < 1.0 and a_star_bp > 0.0 and a_star_ffp > 0.0):
 
             e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf = run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
 
@@ -176,8 +220,10 @@ if __name__ in ('__main__','__plot__'):
 
             secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change))
 
-            if(cont==10):
-                break
+            save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file)
+
+            # if(cont==5):
+            #     break
 
             cont += 1
 
@@ -185,3 +231,4 @@ if __name__ in ('__main__','__plot__'):
 
     secular_stables_file.close()
     stables_file.close()
+    fractional_changes_file.close()

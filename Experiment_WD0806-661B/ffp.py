@@ -84,7 +84,7 @@ def get_parabolic_velocity(m0, m_ffp, b_ffp, r_inf, m_bp, a_bp, phi_bp):
     cm_y = m_bp*a_bp*math.sin(np.radians(phi_bp))/cm_M
 
     M = m0 + m_ffp + m_bp
-    r = ((r_inf-cm_x)**2+(b_ffp-cm_y)**2).sqrt()
+    r = (r_inf**2 + b_ffp**2).sqrt()
 
     parabolic_velocity_squared = 2.0*M*(1.0 | nbody_system.length**3 * nbody_system.time**-2 * nbody_system.mass**-1)/r
 
@@ -120,8 +120,8 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_f
     m0_ffp[0].velocity = (zero_v,zero_v,zero_v)
     #Free-floating planet
     m0_ffp[1].mass = m_ffp
-    m0_ffp[1].position = (-r_inf-cm_p[0],-b_ffp-cm_p[1],zero_p)
-    m0_ffp[1].velocity = (parabolic_velocity,zero_v,zero_v)
+    m0_ffp[1].position = (-r_inf+cm_p[0], b_ffp+cm_p[1], cm_p[2])
+    m0_ffp[1].velocity = (parabolic_velocity, zero_v, zero_v)
     #Orbital Elements
     star_planet_as_one = Particles(1)
     star_planet_as_one.mass = m0 + m_bp
@@ -169,7 +169,7 @@ def is_hill_stable(m_values, a_values, e_values, converter):
 
     A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
 
-    if (e_1 > 1.0 or e_2 > 1.0):
+    if (e_1 > 1.0 or e_2 > 1.0 or a_1 < 0.0 or a_2 < 0.0):
         return False
     if ((1-e_1**2)/(1-e_2**2) < 0.0):
         return False
