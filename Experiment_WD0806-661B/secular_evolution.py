@@ -122,9 +122,6 @@ def run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_f
 
     return ecc_star_bp, ecc_star_ffp, sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU), np.rad2deg(inc_star_bp), np.rad2deg(inc_star_ffp), np.rad2deg(lan_star_bp), np.rad2deg(lan_star_ffp), np.rad2deg(ap_star_bp), np.rad2deg(ap_star_ffp)
 
-def is_hill_stable(m_star, m_bp, m_ffp, e_sb, e_sf, a_sb, a_sf):
-    return True
-
 if __name__ in ('__main__','__plot__'):
 
     endtime = 10000000.0
@@ -133,12 +130,16 @@ if __name__ in ('__main__','__plot__'):
 
     create_parameters_and_stables_files()
 
+    # stop_code()
+
     secular_stables_file = open('./secular_stables.txt','w')
     stables_file = open('./stables.txt','r')
 
     #write the header
     line = stables_file.readline()
     secular_stables_file.write(line)
+
+    cont = 1
 
     line = stables_file.readline()
     while(line != ''):
@@ -165,12 +166,20 @@ if __name__ in ('__main__','__plot__'):
 
         energy_change = float(parts[15].split('\t')[0])
 
-        e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf = run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
+        if (e_star_bp < 1.0 and e_star_ffp < 1.0):
 
-        run_time = float(parts[14]) + time.time() - start_time
+            print cont
 
-        if( is_hill_stable(m_star, m_bp, m_ffp, e_sb, e_sf, a_sb, a_sf) ):
-            secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sb,e_sf,a_sb,a_sf,i_sb,i_sf,lan_sb,lan_sf,ap_sb,ap_sf,run_time,energy_change))
+            e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf = run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
+
+            run_time = float(parts[14]) + time.time() - start_time
+
+            secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change))
+
+            if(cont==10):
+                break
+
+            cont += 1
 
         line = stables_file.readline()
 

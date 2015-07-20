@@ -15,50 +15,6 @@ def stop_code():
     import sys
     sys.exit()
 
-def solve_for_x(m0, m_bp, m_ffp):
-
-    coefficients = [m_bp+m_ffp, 2*m_bp+3*m_ffp, m_bp+3*m_ffp, -(m_bp+3*m0), -(3*m0+2*m_bp), -(m0+m_bp)]
-    solutions = np.roots(coefficients)
-
-    return abs(solutions[math.ceil(len(solutions)/2.0)-1])
-
-def is_hill_stable(m_values, a_values, e_values):
-
-    m0 = m_values[0]
-    m_ffp = m_values[1]
-    m_bp = m_values[2]
-
-    M = m0 + m_bp + m_ffp
-    mu = m0 + m_bp
-
-    a_1 = a_values[2]
-    a_2 =a_values[1]
-
-    e_1 = e_values[2]
-    e_2 = e_values[1]
-
-    x = solve_for_x(m0, m_bp, m_ffp)
-
-    f_x = m0*m_bp + (m0*m_ffp)/(1+x) + (m_bp*m_ffp)/(x)
-    g_x = m_bp*m_ffp + m0*m_ffp*(1+x)**2 + m0*m_bp*(x**2)
-
-    A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
-
-    if ((1-e_1**2)/(1-e_2**2) < 0.0):
-        return False
-    if ((a_1*m_ffp*mu)/(a_2*m0*m_bp) < 0.0):
-        return False
-
-    beta = (m0*m_bp/m_ffp)**(3.0/2.0)*(M/(mu**4))**(1.0/2.0)*((1-e_1**2)/(1-e_2**2))**(1.0/2.0)
-    y = ((a_1*m_ffp*mu)/(a_2*m0*m_bp))**(1.0/2.0)
-
-    equation = (1+y**2)*(beta**2*y**2 + 2*beta*y + 1) - A*y**2
-
-    if(equation >= 0.0):
-        return True
-    else:
-        return False
-
 def plot_trajectory(x, y, filename, x_start_longterm, y_start_longterm):
 
     f = plt.figure(figsize=(70,30))
@@ -98,65 +54,150 @@ def plot_trajectory(x, y, filename, x_start_longterm, y_start_longterm):
 
     plt.close()
 
-def plot_orbital_elements(times, eccs, smas, filename):
+def plot_orbital_elements(times_array, e_array, a_array, i_array, l_array, g_array, fout):
 
-    f = plt.figure(figsize=(35,15))
+    #BP
+    figure = plt.figure(figsize=(25,20))
+    N_subplots = 5
 
-    ecc_starbp_ffp = eccs[:,1]
-    ecc_star_bp = eccs[:,2]
+    plot_e = figure.add_subplot(N_subplots,1,1)
+    plot_a = figure.add_subplot(N_subplots,1,2)
+    plot_i = figure.add_subplot(N_subplots,1,3)
+    plot_l = figure.add_subplot(N_subplots,1,4)
+    plot_g = figure.add_subplot(N_subplots,1,5)
 
-    sma_starbp_ffp = smas[:,1]
-    sma_star_bp = smas[:,2]
+    plot_e.plot(times_array,e_array[:,0],c='c',lw=2)
+    a_array_subset = a_array[:,0]
+    log10_a_array = [math.log10(aa) for aa in a_array_subset]
+    plot_a.plot(times_array,log10_a_array,c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,0]*180.0/np.pi,c='c',lw=2)
+    plot_l.plot(times_array,l_array[:,0]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,0]*180.0/np.pi,c='c',lw=2)
 
-    #eccentricity
-    subplot = f.add_subplot(1,2,1)
+    t_max_yr = max(times_array)
+    plot_e.set_xlim(0,t_max_yr)
+    plot_a.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_l.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
 
-    subplot.plot(times,ecc_starbp_ffp,c='red',label='FFP and Star+BP')
-    subplot.plot(times,ecc_star_bp,c='green',label='BP and Star')
+    plot_e.set_xlabel('$t/\mathrm{yr}$')
+    plot_a.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_l.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
 
-    subplot.set_title('Eccentricity', fontsize=20)
-    subplot.set_xlabel('$t$ (yr)', fontsize=20)
-    subplot.set_ylabel('$e$', fontsize=20)
-    subplot.set_ylim(-0.5,1.5)
-    subplot.legend(fontsize=20)
+    plot_e.set_ylabel('$e_\mathrm{BP}$')
+    plot_a.set_ylabel('$\log{(a_\mathrm{BP})}$')
+    plot_i.set_ylabel('$i_\mathrm{BP} ({}^\circ)$')
+    plot_l.set_ylabel('$l_\mathrm{BP} ({}^\circ)$')
+    plot_g.set_ylabel('$g_\mathrm{BP} ({}^\circ)$')
 
-    #semimajoraxis
-    subplot = f.add_subplot(1,2,2)
+    figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
-    sma_starbp_ffp_log = []
-
-    i=0
-    for s in sma_starbp_ffp:
-        if(i!=0):
-            try:
-                sma_starbp_ffp_log.append(math.log10(s))
-            except:
-                # print i
-                sma_starbp_ffp_log.append(sma_starbp_ffp_log[-1])
-        i += 1
-
-    sma_star_bp_log = []
-
-    i=0
-    for s in sma_star_bp:
-        if(i!=0):
-            try:
-                sma_star_bp_log.append(math.log10(s))
-            except:
-                # print i
-                sma_star_bp_log.append(sma_star_bp_log[-1])
-        i += 1
-
-    subplot.plot(times[1:],sma_starbp_ffp_log,c='red',label='FFP and Star+BP')
-    subplot.plot(times[1:],sma_star_bp_log,c='green',label='BP and Star')
-
-    subplot.set_title('Semimajor Axis', fontsize=20)
-    subplot.set_xlabel('$t$ (yr)', fontsize=20)
-    subplot.set_ylabel('$\log{(a)}$', fontsize=20)
-    subplot.legend(fontsize=20)
-
-    plt.savefig('./orbital_elements_'+filename+'.png')
+    plt.savefig('./orbital_elements_bp_'+fout+'.png')
     plt.close()
+
+    #FFP
+    figure = plt.figure(figsize=(25,20))
+    N_subplots = 5
+
+    plot_e = figure.add_subplot(N_subplots,1,1)
+    plot_a = figure.add_subplot(N_subplots,1,2)
+    plot_i = figure.add_subplot(N_subplots,1,3)
+    plot_l = figure.add_subplot(N_subplots,1,4)
+    plot_g = figure.add_subplot(N_subplots,1,5)
+
+    plot_e.plot(times_array,e_array[:,1],c='c',lw=2)
+    a_array_subset = a_array[:,1]
+    log10_a_array = [math.log10(aa) for aa in a_array_subset]
+    plot_a.plot(times_array,log10_a_array,c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,1]*180.0/np.pi,c='c',lw=2)
+    plot_l.plot(times_array,l_array[:,1]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,1]*180.0/np.pi,c='c',lw=2)
+
+    t_max_yr = max(times_array)
+    plot_e.set_xlim(0,t_max_yr)
+    plot_a.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_l.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
+
+    plot_e.set_xlabel('$t/\mathrm{yr}$')
+    plot_a.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_l.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
+
+    plot_e.set_ylabel('$e_\mathrm{FFP}$')
+    plot_a.set_ylabel('$\log{(a_\mathrm{FFP})} (\mathrm{AU})$')
+    plot_i.set_ylabel('$i_\mathrm{FFP} ({}^\circ)$')
+    plot_l.set_ylabel('$l_\mathrm{FFP} ({}^\circ)$')
+    plot_g.set_ylabel('$g_\mathrm{FFP} ({}^\circ)$')
+
+    figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+
+    plt.savefig('./orbital_elements_ffp_'+fout+'.png')
+
+# def plot_orbital_elements(times, eccs, smas, filename):
+#
+#     f = plt.figure(figsize=(35,15))
+#
+#     ecc_starbp_ffp = eccs[:,1]
+#     ecc_star_bp = eccs[:,2]
+#
+#     sma_starbp_ffp = smas[:,1]
+#     sma_star_bp = smas[:,2]
+#
+#     #eccentricity
+#     subplot = f.add_subplot(1,2,1)
+#
+#     subplot.plot(times,ecc_starbp_ffp,c='red',label='FFP and Star+BP')
+#     subplot.plot(times,ecc_star_bp,c='green',label='BP and Star')
+#
+#     subplot.set_title('Eccentricity', fontsize=20)
+#     subplot.set_xlabel('$t$ (yr)', fontsize=20)
+#     subplot.set_ylabel('$e$', fontsize=20)
+#     subplot.set_ylim(-0.5,1.5)
+#     subplot.legend(fontsize=20)
+#
+#     #semimajoraxis
+#     subplot = f.add_subplot(1,2,2)
+#
+#     sma_starbp_ffp_log = []
+#
+#     i=0
+#     for s in sma_starbp_ffp:
+#         if(i!=0):
+#             try:
+#                 sma_starbp_ffp_log.append(math.log10(s))
+#             except:
+#                 # print i
+#                 sma_starbp_ffp_log.append(sma_starbp_ffp_log[-1])
+#         i += 1
+#
+#     sma_star_bp_log = []
+#
+#     i=0
+#     for s in sma_star_bp:
+#         if(i!=0):
+#             try:
+#                 sma_star_bp_log.append(math.log10(s))
+#             except:
+#                 # print i
+#                 sma_star_bp_log.append(sma_star_bp_log[-1])
+#         i += 1
+#
+#     subplot.plot(times[1:],sma_starbp_ffp_log,c='red',label='FFP and Star+BP')
+#     subplot.plot(times[1:],sma_star_bp_log,c='green',label='BP and Star')
+#
+#     subplot.set_title('Semimajor Axis', fontsize=20)
+#     subplot.set_xlabel('$t$ (yr)', fontsize=20)
+#     subplot.set_ylabel('$\log{(a)}$', fontsize=20)
+#     subplot.legend(fontsize=20)
+#
+#     plt.savefig('./orbital_elements_'+filename+'.png')
+#     plt.close()
 
 def my_orbital_elements_from_binary(mass1, mass2, binary):
 
@@ -236,9 +277,14 @@ def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
         #To append body history
         eccs = []
         smas = []
+        incs = []
+        lans = []
+        aps = []
+
         xs = []
         ys = []
         times = []
+
         snapshot = 1
 
         x_start_longterm = [0.0,0.0,0.0]
@@ -249,12 +295,20 @@ def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
             #Order: star - ffp - bp
             e_values = data.eccentricity
             a_values = data.semimajoraxis.value_in(units.AU)
+            i_values = data.inclination
+            l_values = data.longitude_of_ascending_node
+            g_values = data.argument_of_periapsis
+
             x_values = data.x.value_in(units.AU)
             y_values = data.y.value_in(units.AU)
             t_value = data.time.value_in(units.yr)[0]
 
             eccs.append(e_values)
             smas.append(a_values)
+            incs.append(i_values)
+            lans.append(l_values)
+            aps.append(g_values)
+
             xs.append(x_values)
             ys.append(y_values)
             times.append(t_value)
@@ -263,24 +317,10 @@ def make_individual_plots(filenames, ms_bp, as_bp, bs_ffp, phis_bp):
                 x_start_longterm = x_values
                 y_start_longterm = y_values
 
-                m0 = 0.58 | units.MSun
-                m_ffp = 7.5 | units.MJupiter
-
-                star_ffp = [data[0], data[1]]
-                star_bp = [data[0], data[2]]
-
-                print 'mass1, mass2, semimajor_axis, eccentricity, true_anomaly, inclination, long_asc_node, arg_per'
-                m0, m_ffp, sma, ecc, ta, inc, lan, ap = my_orbital_elements_from_binary(m0, m_ffp, star_ffp)
-                print m0.value_in(units.MSun), m_ffp.value_in(units.MJupiter), sma.value_in(units.AU), ecc, ta, inc, lan, ap
-                m0, m_bpp, sma, ecc, ta, inc, lan, ap = my_orbital_elements_from_binary(m0, m_bp | units.MJupiter, star_bp)
-                print m0.value_in(units.MSun), m_bpp.value_in(units.MJupiter), sma.value_in(units.AU), ecc, ta, inc, lan, ap
-
             snapshot += 1
 
         plot_trajectory(np.array(xs), np.array(ys), filename, x_start_longterm, y_start_longterm)
-        plot_orbital_elements(np.array(times), np.array(eccs), np.array(smas), filename)
-
-        print is_hill_stable([607,7.5,m_bp], a_values, e_values)
+        plot_orbital_elements(np.array(times), np.array(eccs), np.array(smas), np.array(incs), np.array(lans), np.array(aps), filename)
 
 if __name__ in ('__main__', '__plot__'):
 

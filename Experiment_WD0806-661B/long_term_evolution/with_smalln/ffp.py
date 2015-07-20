@@ -411,4 +411,4 @@ if __name__ in ('__main__', '__plot__'):
     f2 = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
 
     run_capture(t_end_p=65000.0*15, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m1, a_bp_p=a1, b_ffp_p=b1, phi_bp_p=p1, n_steps=1200000*15, path_filename='./'+f1+'.hdf5', n_snapshots=60000*15)
-    #run_capture(t_end_p=65000.0*15, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m2, a_bp_p=a2, b_ffp_p=b2, phi_bp_p=p2, n_steps=1200000*15, path_filename='./'+f2+'.hdf5', n_snapshots=60000*15)
+    #run_capture(t_end_p=100000.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m2, a_bp_p=a2, b_ffp_p=b2, phi_bp_p=p2, n_steps=2000000, path_filename='./'+f2+'.hdf5', n_snapshots=80000)

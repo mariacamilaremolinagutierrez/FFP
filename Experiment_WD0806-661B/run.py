@@ -19,12 +19,16 @@ def permute(m_bp):
     b_limit_fraction = 0.3 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    n_as_bp = 10
+    n_as_bp = 5
     n_bs_ffp = 10
+    n_incs_bp = 5
+    n_lans_bp = 4
     n_phis_bp = 100
 
     #Variable parameters
     as_bp = np.linspace(1.0,50.0,n_as_bp) #AU
+    incs_bp = np.linspace(0,90.0,n_incs_bp) #degrees
+    lans_bp = np.linspace(0.0,180.0,n_lans_bp) #degrees
 
     m_bp_filename = ('m%.4e')%(m_bp)
 
@@ -53,41 +57,47 @@ def permute(m_bp):
 
         for b_ffp in bs_ffp:
 
-            np.random.seed(12)
+            for inc_bp in incs_bp:
 
-            for j in range(n_phis_bp):
+                for lan_bp in lans_bp:
 
-                phi_bp = np.random.random()*360.0 #degrees (this should be 1000 phis)
+                    np.random.seed(12)
 
-                #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
-                if (i>num_runs):
-                    #Time starts
-                    start_time = time.time()
+                    for j in range(n_phis_bp):
 
-                    #Filename
-                    max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(t_end_p=t_end,
-                                                                                                                                                                                                    m0_p=m0,
-                                                                                                                                                                                                    m_ffp_p=m_ffp,
-                                                                                                                                                                                                    e_bp_p=e_bp,
-                                                                                                                                                                                                    m_bp_p=m_bp,
-                                                                                                                                                                                                    a_bp_p=a_bp,
-                                                                                                                                                                                                    b_ffp_p=b_ffp,
-                                                                                                                                                                                                    phi_bp_p=phi_bp,
-                                                                                                                                                                                                    n_steps=n_steps,
-                                                                                                                                                                                                    n_snapshots=n_snapshots,
-                                                                                                                                                                                                    n_r0_in_rinf=n_r0_in_rinf)
+                        phi_bp = np.random.random()*360.0 #degrees (this should be 1000 phis)
 
-                    #Time stops
-                    duration = time.time()-start_time
+                        #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
+                        if (i>num_runs):
+                            #Time starts
+                            start_time = time.time()
 
-                    #Write in File
-                    file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+                            #Filename
+                            max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(t_end_p=t_end,
+                                                                                                                                                                                                            m0_p=m0,
+                                                                                                                                                                                                            m_ffp_p=m_ffp,
+                                                                                                                                                                                                            e_bp_p=e_bp,
+                                                                                                                                                                                                            m_bp_p=m_bp,
+                                                                                                                                                                                                            a_bp_p=a_bp,
+                                                                                                                                                                                                            b_ffp_p=b_ffp,
+                                                                                                                                                                                                            phi_bp_p=phi_bp,
+                                                                                                                                                                                                            inc_bp_p=inc_bp,
+                                                                                                                                                                                                            lan_bp_p=lan_bp,
+                                                                                                                                                                                                            n_steps=n_steps,
+                                                                                                                                                                                                            n_snapshots=n_snapshots,
+                                                                                                                                                                                                            n_r0_in_rinf=n_r0_in_rinf)
 
-                    if(is_stable):
-                        file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+                            #Time stops
+                            duration = time.time()-start_time
 
-                #Advance counter
-                i += 1
+                            #Write in File
+                            file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+
+                            if(is_stable):
+                                file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+
+                        #Advance counter
+                        i += 1
 
     file_parameters.close()
     file_stables.close()

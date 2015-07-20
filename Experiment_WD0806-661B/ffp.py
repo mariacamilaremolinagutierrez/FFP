@@ -90,14 +90,14 @@ def get_parabolic_velocity(m0, m_ffp, b_ffp, r_inf, m_bp, a_bp, phi_bp):
 
     return parabolic_velocity_squared.sqrt()
 
-def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf):
+def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf):
 
     #Bodies
     bodies = Particles()
 
     ##Get BP in orbit
     #Binary
-    star_planet = new_binary_from_orbital_elements(m0, m_bp, a_bp, e_bp, true_anomaly=phi_bp)
+    star_planet = new_binary_from_orbital_elements(m0, m_bp, a_bp, e_bp, true_anomaly=phi_bp, inclination = inc_bp, longitude_of_the_ascending_node = lan_bp)
     #Planet attributes
     star_planet.eccentricity = e_bp
     star_planet.semimajoraxis = a_bp
@@ -169,6 +169,8 @@ def is_hill_stable(m_values, a_values, e_values, converter):
 
     A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
 
+    if (e_1 > 1.0 or e_2 > 1.0):
+        return False
     if ((1-e_1**2)/(1-e_2**2) < 0.0):
         return False
     if ((a_1*m_ffp*mu)/(a_2*m0*m_bp) < 0.0):
@@ -254,7 +256,7 @@ def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
 
     return max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
 
-def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p):
+def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p):
 
     #time of integration in yr
     t_end = converter.to_nbody(t_end_p | units.yr)
@@ -272,15 +274,19 @@ def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_f
     b_ffp = converter.to_nbody(b_ffp_p | units.AU)
     #initial angle for of the bounded planet in degrees
     phi_bp = phi_bp_p
+    #inclination in degrees
+    inc_bp = inc_bp_p
+    #longitude_of_the_ascending_node in degrees
+    lan_bp = lan_bp_p
 
-    return t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp
+    return t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
 
 def stop_code():
     print '\nSTOP'
     import sys
     sys.exit()
 
-def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, n_steps=12000, n_snapshots=600, n_r0_in_rinf=40.0):
+def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, inc_bp_p=0.0, lan_bp_p=0.0, n_steps=12000, n_snapshots=600, n_r0_in_rinf=40.0):
     """
     Units: t_end_p(yr), m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
     """
@@ -288,13 +294,13 @@ def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a
     converter = nbody_system.nbody_to_si(1 | units.MSun,  5 | units.AU)
 
     #Conversion of units
-    t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p)
+    t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p)
 
     #Initial distance to the planet (x-cordinate)
     r_inf = n_r0_in_rinf*a_bp
 
     #Particle superset: star, FFP, planets
-    bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf)
+    bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf)
 
     #Evolve time
     max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots)

@@ -83,24 +83,28 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
     times_array = []
     e_array = []
     a_array = []
-    g_array = []
     i_array = []
+    l_array = []
+    g_array = []
 
     time = 0.0 | units.yr
     ecc_star_bp = code.binaries[0].eccentricity
     ecc_star_ffp = code.binaries[1].eccentricity
     sma_star_bp = code.binaries[0].semimajor_axis
     sma_star_ffp = code.binaries[1].semimajor_axis
-    ap_star_bp = code.binaries[0].argument_of_pericenter
-    ap_star_ffp = code.binaries[1].argument_of_pericenter
     inc_star_bp = code.binaries[0].inclination
     inc_star_ffp = code.binaries[1].inclination
+    lan_star_bp = code.binaries[0].longitude_of_ascending_node
+    lan_star_ffp = code.binaries[1].longitude_of_ascending_node
+    ap_star_bp = code.binaries[0].argument_of_pericenter
+    ap_star_ffp = code.binaries[1].argument_of_pericenter
 
     times_array.append(time.value_in(units.yr))
     e_array.append([ecc_star_bp, ecc_star_ffp])
     a_array.append([sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU)])
-    g_array.append([ap_star_bp, ap_star_ffp])
     i_array.append([inc_star_bp, inc_star_ffp])
+    l_array.append([lan_star_bp, lan_star_ffp])
+    g_array.append([ap_star_bp, ap_star_ffp])
 
     while (time < end_time):
 
@@ -111,94 +115,110 @@ def evolve_triple_system(binaries,end_time, output_time_step, fout):
         ecc_star_ffp = code.binaries[1].eccentricity
         sma_star_bp = code.binaries[0].semimajor_axis
         sma_star_ffp = code.binaries[1].semimajor_axis
-        ap_star_bp = code.binaries[0].argument_of_pericenter
-        ap_star_ffp = code.binaries[1].argument_of_pericenter
         inc_star_bp = code.binaries[0].inclination
         inc_star_ffp = code.binaries[1].inclination
+        lan_star_bp = code.binaries[0].longitude_of_ascending_node
+        lan_star_ffp = code.binaries[1].longitude_of_ascending_node
+        ap_star_bp = code.binaries[0].argument_of_pericenter
+        ap_star_ffp = code.binaries[1].argument_of_pericenter
 
         times_array.append(time.value_in(units.yr))
         e_array.append([ecc_star_bp, ecc_star_ffp])
         a_array.append([sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU)])
-        g_array.append([ap_star_bp, ap_star_ffp])
         i_array.append([inc_star_bp, inc_star_ffp])
+        l_array.append([lan_star_bp, lan_star_ffp])
+        g_array.append([ap_star_bp, ap_star_ffp])
 
     times_array = np.array(times_array)
     e_array = np.array(e_array)
     a_array = np.array(a_array)
-    g_array = np.array(g_array)
     i_array = np.array(i_array)
+    l_array = np.array(l_array)
+    g_array = np.array(g_array)
 
-    return times_array, e_array, a_array, g_array, i_array
+    return times_array, e_array, a_array, i_array, l_array, g_array
 
-def plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout):
+def plot_orbital_elements(times_array, e_array, a_array, i_array, l_array, g_array, fout):
 
     #BP
-    figure = plt.figure(figsize=(25,15))
-    N_subplots = 4
+    figure = plt.figure(figsize=(25,20))
+    N_subplots = 5
 
     plot_e = figure.add_subplot(N_subplots,1,1)
-    plot_i = figure.add_subplot(N_subplots,1,2)
-    plot_g = figure.add_subplot(N_subplots,1,3)
-    plot_a = figure.add_subplot(N_subplots,1,4)
+    plot_a = figure.add_subplot(N_subplots,1,2)
+    plot_i = figure.add_subplot(N_subplots,1,3)
+    plot_l = figure.add_subplot(N_subplots,1,4)
+    plot_g = figure.add_subplot(N_subplots,1,5)
 
     plot_e.plot(times_array,e_array[:,0],c='c',lw=2)
-    plot_i.plot(times_array,i_array[:,0]*180.0/np.pi,c='c',lw=2)
-    plot_g.plot(times_array,g_array[:,0],c='c',lw=2)
     a_array_subset = a_array[:,0]
     log10_a_array = [math.log10(aa) for aa in a_array_subset]
     plot_a.plot(times_array,log10_a_array,c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,0]*180.0/np.pi,c='c',lw=2)
+    plot_l.plot(times_array,l_array[:,0]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,0]*180.0/np.pi,c='c',lw=2)
 
     t_max_yr = max(times_array)
     plot_e.set_xlim(0,t_max_yr)
-    plot_i.set_xlim(0,t_max_yr)
-    plot_g.set_xlim(0,t_max_yr)
     plot_a.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_l.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
 
     plot_e.set_xlabel('$t/\mathrm{yr}$')
-    plot_i.set_xlabel('$t/\mathrm{yr}$')
-    plot_g.set_xlabel('$t/\mathrm{yr}$')
     plot_a.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_l.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
 
     plot_e.set_ylabel('$e_\mathrm{BP}$')
+    plot_a.set_ylabel('$\log{(a_\mathrm{BP})}$')
     plot_i.set_ylabel('$i_\mathrm{BP} ({}^\circ)$')
+    plot_l.set_ylabel('$l_\mathrm{BP} ({}^\circ)$')
     plot_g.set_ylabel('$g_\mathrm{BP} ({}^\circ)$')
-    plot_a.set_ylabel('$\log{(a_\mathrm{BP})} (\mathrm{AU})$')
+
     figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
     plt.savefig('./orbital_elements_bp_'+fout+'.png')
     plt.close()
 
     #FFP
-    figure = plt.figure(figsize=(25,15))
-    N_subplots = 4
+    figure = plt.figure(figsize=(25,20))
+    N_subplots = 5
 
     plot_e = figure.add_subplot(N_subplots,1,1)
-    plot_i = figure.add_subplot(N_subplots,1,2)
-    plot_g = figure.add_subplot(N_subplots,1,3)
-    plot_a = figure.add_subplot(N_subplots,1,4)
+    plot_a = figure.add_subplot(N_subplots,1,2)
+    plot_i = figure.add_subplot(N_subplots,1,3)
+    plot_l = figure.add_subplot(N_subplots,1,4)
+    plot_g = figure.add_subplot(N_subplots,1,5)
 
     plot_e.plot(times_array,e_array[:,1],c='c',lw=2)
-    plot_i.plot(times_array,i_array[:,1]*180.0/np.pi,c='c',lw=2)
-    plot_g.plot(times_array,g_array[:,1],c='c',lw=2)
     a_array_subset = a_array[:,1]
     log10_a_array = [math.log10(aa) for aa in a_array_subset]
     plot_a.plot(times_array,log10_a_array,c='c',lw=2)
+    plot_i.plot(times_array,i_array[:,1]*180.0/np.pi,c='c',lw=2)
+    plot_l.plot(times_array,l_array[:,1]*180.0/np.pi,c='c',lw=2)
+    plot_g.plot(times_array,g_array[:,1]*180.0/np.pi,c='c',lw=2)
 
     t_max_yr = max(times_array)
     plot_e.set_xlim(0,t_max_yr)
-    plot_i.set_xlim(0,t_max_yr)
-    plot_g.set_xlim(0,t_max_yr)
     plot_a.set_xlim(0,t_max_yr)
+    plot_i.set_xlim(0,t_max_yr)
+    plot_l.set_xlim(0,t_max_yr)
+    plot_g.set_xlim(0,t_max_yr)
 
     plot_e.set_xlabel('$t/\mathrm{yr}$')
-    plot_i.set_xlabel('$t/\mathrm{yr}$')
-    plot_g.set_xlabel('$t/\mathrm{yr}$')
     plot_a.set_xlabel('$t/\mathrm{yr}$')
+    plot_i.set_xlabel('$t/\mathrm{yr}$')
+    plot_l.set_xlabel('$t/\mathrm{yr}$')
+    plot_g.set_xlabel('$t/\mathrm{yr}$')
 
     plot_e.set_ylabel('$e_\mathrm{FFP}$')
-    plot_i.set_ylabel('$i_\mathrm{FFP} ({}^\circ)$')
-    plot_g.set_ylabel('$g_\mathrm{FFP} ({}^\circ)$')
     plot_a.set_ylabel('$\log{(a_\mathrm{FFP})} (\mathrm{AU})$')
+    plot_i.set_ylabel('$i_\mathrm{FFP} ({}^\circ)$')
+    plot_l.set_ylabel('$l_\mathrm{FFP} ({}^\circ)$')
+    plot_g.set_ylabel('$g_\mathrm{FFP} ({}^\circ)$')
+
     figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
     plt.savefig('./orbital_elements_ffp_'+fout+'.png')
@@ -219,9 +239,9 @@ def run(m_bp=0.1, e_star_bp=0.0, e_star_ffp=0.998, sma_star_bp=1.0, sma_star_ffp
     output_time_step = dt_snapshots | units.yr
     end_time = endtime | units.yr
 
-    times_array, e_array, a_array, g_array, i_array = evolve_triple_system(binaries, end_time, output_time_step, fout)
+    times_array, e_array, a_array, i_array, l_array, g_array = evolve_triple_system(binaries, end_time, output_time_step, fout)
 
-    plot_orbital_elements(times_array, e_array, a_array, g_array, i_array, fout)
+    plot_orbital_elements(times_array, e_array, a_array, i_array, l_array, g_array, fout)
 
 if __name__ in ('__main__','__plot__'):
 
