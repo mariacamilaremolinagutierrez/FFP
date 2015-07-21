@@ -1,4 +1,4 @@
-import math
+import math, os
 import numpy as np
 
 from matplotlib.pyplot import *
@@ -11,6 +11,7 @@ from amuse.units import units, constants, nbody_system
 from amuse.units.quantities import AdaptingVectorQuantity
 from amuse.datamodel import Particles, ParticlesSuperset
 from amuse.community.smalln.interface import SmallN
+from amuse.community.kepler.interface import Kepler
 from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
 def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
@@ -122,23 +123,40 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_f
     m0_ffp[1].mass = m_ffp
     m0_ffp[1].position = (-r_inf+cm_p[0], b_ffp+cm_p[1], cm_p[2])
     m0_ffp[1].velocity = (parabolic_velocity, zero_v, zero_v)
-    #Orbital Elements
+
+    #To find the distance and time to periastron
+    kep = Kepler()
+    kep.initialize_code()
+
     star_planet_as_one = Particles(1)
     star_planet_as_one.mass = m0 + m_bp
     star_planet_as_one.position = cm_p
     star_planet_as_one.velocity = cm_v
+
+    kepler_bodies = Particles()
+    kepler_bodies.add_particle(star_planet_as_one[0])
+    kepler_bodies.add_particle(m0_ffp[1])
+
+    kep.initialize_from_particles(kepler_bodies)
+
+    kep.advance_to_periastron()
+    time_pericenter = kep.get_time()
+    separation_vector_pericenter = kep.get_separation_vector()
+
+    kep.stop()
+
+    #Set sma and e as attributes of the bodies. For the star it sets the initial values of semimajoraxis and eccentricity of the ffp around star+bp
     binary = [star_planet_as_one[0], m0_ffp[1]]
     sma, e, inclination, long_asc_node, arg_per = my_orbital_elements_from_binary(binary)
-    #For the star it sets the initial values of semimajoraxis and eccentricity of the ffp around star+bp
     m0_ffp.eccentricity = e
     m0_ffp.semimajoraxis = sma
 
-    #Order: star, ffp, bp
+    #Adding bodies. Order: star, ffp, bp
     bodies.add_particle(m0_ffp[0])
     bodies.add_particle(m0_ffp[1])
     bodies.add_particle(star_planet[1])
 
-    return bodies
+    return bodies, separation_vector_pericenter, time_pericenter
 
 def solve_for_x(m0, m_bp, m_ffp):
 
@@ -186,22 +204,21 @@ def is_hill_stable(m_values, a_values, e_values, converter):
     else:
         return False
 
-def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
+def evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots):
 
     #Positions and velocities centered on the center of mass
     bodies.move_to_center()
 
-    time = 0. | nbody_system.time
-    dt = t_end / float(n_steps)
+    time = 0.0 | nbody_system.time
     dt_snapshots = t_end / float(n_snapshots)
 
-    gravity = initialize_code(bodies, timestep_parameter = dt.value_in(nbody_system.time))
+    gravity = initialize_code(bodies, timestep_parameter = dt_integration.value_in(nbody_system.time))
     channel_from_gr_to_framework = gravity.particles.new_channel_to(bodies)
 
     E_initial = gravity.kinetic_energy + gravity.potential_energy
     DeltaE_max = 0.0 | nbody_system.energy
 
-    while time<=t_end:
+    while (time<=t_end):
 
         gravity.evolve_model(time)
         channel_from_gr_to_framework.copy()
@@ -256,10 +273,10 @@ def evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots):
 
     return max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
 
-def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p):
+def convert_units(converter, dt_integration_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p):
 
-    #time of integration in yr
-    t_end = converter.to_nbody(t_end_p | units.yr)
+    #dt for integrator
+    dt_integration = converter.to_nbody(dt_integration_p | units.yr)
     #mass of the disk-central star in MSun
     m0 = converter.to_nbody(m0_p | units.MSun)
     #mass of the FFP MJupiter
@@ -279,14 +296,14 @@ def convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_f
     #longitude_of_the_ascending_node in degrees
     lan_bp = lan_bp_p
 
-    return t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
+    return dt_integration, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
 
 def stop_code():
     print '\nSTOP'
     import sys
     sys.exit()
 
-def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, inc_bp_p=0.0, lan_bp_p=0.0, n_steps=12000, n_snapshots=600, n_r0_in_rinf=40.0):
+def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, inc_bp_p=0.0, lan_bp_p=0.0, dt_integration_p=0.05, n_snapshots=600, n_r0_in_rinf=40.0):
     """
     Units: t_end_p(yr), m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
     """
@@ -294,18 +311,27 @@ def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a
     converter = nbody_system.nbody_to_si(1 | units.MSun,  5 | units.AU)
 
     #Conversion of units
-    t_end, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp = convert_units(converter, t_end_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p)
+    dt_integration, m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp = convert_units(converter, dt_integration_p, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p)
 
     #Initial distance to the planet (x-cordinate)
     r_inf = n_r0_in_rinf*a_bp
 
     #Particle superset: star, FFP, planets
-    bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf)
+    bodies, separation_vector_pericenter, time_pericenter = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf)
+
+    pericenter_larger = True
+    pericenter = (separation_vector_pericenter[0]**2 + separation_vector_pericenter[1]**2 + separation_vector_pericenter[2]**2).sqrt()
+    if (pericenter <= a_bp):
+        pericenter_larger = False
 
     #Evolve time
-    max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = evolve_gravity(bodies, converter, t_end, n_steps, n_snapshots)
+    t_end = 4.0*time_pericenter
+    max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots)
 
-    return max_energy_change, is_stable, e_star_ffp, e_star_bp, converter.to_si(sma_star_ffp).value_in(units.AU), converter.to_si(sma_star_bp).value_in(units.AU), inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
+    if(pericenter_larger==False and is_stable):
+        os.system('echo '+str(phi_bp)+' >> phis_pericenter_lower_and_stables.txt')
+
+    return converter.to_si(t_end).value_in(units.yr), max_energy_change, is_stable, e_star_ffp, e_star_bp, converter.to_si(sma_star_ffp).value_in(units.AU), converter.to_si(sma_star_bp).value_in(units.AU), inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
 
 if __name__ in ('__main__', '__plot__'):
 

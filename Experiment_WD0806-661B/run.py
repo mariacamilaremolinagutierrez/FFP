@@ -8,21 +8,27 @@ def find_limit_b(r_0, number_r0_in_rinf, mass_ratio):
 def permute(m_bp):
 
     #Fixed Values
+    dt_integration = 0.05 #yr
     m0 = 0.58 #MSun
     m_ffp = 7.5 #MJupiter
     e_bp = 0.0
 
-    t_end = 650.0 #yr
     n_steps = 12000
     n_snapshots = int(n_steps/20.0)
     n_r0_in_rinf = 45.0
     b_limit_fraction = 0.3 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
+    # n_as_bp = 5
+    # n_bs_ffp = 10
+    # n_incs_bp = 5
+    # n_lans_bp = 4
+    # n_phis_bp = 100
+
     n_as_bp = 5
-    n_bs_ffp = 10
-    n_incs_bp = 5
-    n_lans_bp = 4
+    n_bs_ffp = 5
+    n_incs_bp = 1
+    n_lans_bp = 1
     n_phis_bp = 100
 
     #Variable parameters
@@ -73,28 +79,27 @@ def permute(m_bp):
                             start_time = time.time()
 
                             #Filename
-                            max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(t_end_p=t_end,
-                                                                                                                                                                                                            m0_p=m0,
-                                                                                                                                                                                                            m_ffp_p=m_ffp,
-                                                                                                                                                                                                            e_bp_p=e_bp,
-                                                                                                                                                                                                            m_bp_p=m_bp,
-                                                                                                                                                                                                            a_bp_p=a_bp,
-                                                                                                                                                                                                            b_ffp_p=b_ffp,
-                                                                                                                                                                                                            phi_bp_p=phi_bp,
-                                                                                                                                                                                                            inc_bp_p=inc_bp,
-                                                                                                                                                                                                            lan_bp_p=lan_bp,
-                                                                                                                                                                                                            n_steps=n_steps,
-                                                                                                                                                                                                            n_snapshots=n_snapshots,
-                                                                                                                                                                                                            n_r0_in_rinf=n_r0_in_rinf)
+                            t_end, max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(m0_p=m0,
+                                                                                                                                                                                                                    m_ffp_p=m_ffp,
+                                                                                                                                                                                                                    e_bp_p=e_bp,
+                                                                                                                                                                                                                    m_bp_p=m_bp,
+                                                                                                                                                                                                                    a_bp_p=a_bp,
+                                                                                                                                                                                                                    b_ffp_p=b_ffp,
+                                                                                                                                                                                                                    phi_bp_p=phi_bp,
+                                                                                                                                                                                                                    inc_bp_p=inc_bp,
+                                                                                                                                                                                                                    lan_bp_p=lan_bp,
+                                                                                                                                                                                                                    dt_integration_p=dt_integration,
+                                                                                                                                                                                                                    n_snapshots=n_snapshots,
+                                                                                                                                                                                                                    n_r0_in_rinf=n_r0_in_rinf)
 
                             #Time stops
                             duration = time.time()-start_time
 
                             #Write in File
-                            file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+                            file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end))
 
                             if(is_stable):
-                                file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change))
+                                file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end))
 
                         #Advance counter
                         i += 1

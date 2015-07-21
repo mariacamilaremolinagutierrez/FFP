@@ -18,32 +18,6 @@ def stop_code():
     import sys
     sys.exit()
 
-def create_parameters_and_status_file():
-
-    masses_directories = os.listdir('./particles/')
-
-    with open('./parameters.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\trun_time\tenergy_change\n')
-        for i in range(len(masses_directories)):
-            mass_dir = masses_directories[i]
-            fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
-            infile.close()
-    outfile.close()
-
-    with open('./stables.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\trun_time\tenergy_change\n')
-        for i in range(len(masses_directories)):
-            mass_dir = masses_directories[i]
-            fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
-            infile.close()
-    outfile.close()
-
 def read_parameters_df():
 
     df = pd.read_csv('./parameters.txt', sep='\t')
@@ -52,8 +26,18 @@ def read_parameters_df():
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
+    es_star_bp = df['e_star_bp']
+    es_star_ffp = df['e_star_ffp']
+    smas_star_ffp = df['sma_star_ffp']
+    smas_star_bp = df['sma_star_bp']
+    incs_star_ffp = df['inc_star_ffp']
+    incs_star_bp = df['inc_star_bp']
+    lans_star_ffp = df['lan_star_ffp']
+    lans_star_bp = df['lan_star_bp']
+    aps_star_ffp = df['ap_star_ffp']
+    aps_star_bp = df['ap_star_bp']
 
-    return ms_bp, as_bp, bs_ffp, phis_bp
+    return ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
 
 def read_stables_df():
 
@@ -63,81 +47,18 @@ def read_stables_df():
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
+    es_star_bp = df['e_star_bp']
+    es_star_ffp = df['e_star_ffp']
+    smas_star_ffp = df['sma_star_ffp']
+    smas_star_bp = df['sma_star_bp']
+    incs_star_ffp = df['inc_star_ffp']
+    incs_star_bp = df['inc_star_bp']
+    lans_star_ffp = df['lan_star_ffp']
+    lans_star_bp = df['lan_star_bp']
+    aps_star_ffp = df['ap_star_ffp']
+    aps_star_bp = df['ap_star_bp']
 
-    return df, ms_bp, as_bp, bs_ffp, phis_bp
-
-def plot_trajectory(x, y, filename):
-
-    f = plt.figure(figsize=(70,30))
-
-    x_star = x[:,0]-x[:,0]
-    x_ffp = x[:,1]-x[:,0]
-
-    y_star = y[:,0]-y[:,0]
-    y_ffp = y[:,1]-y[:,0]
-
-    x_planet = x[:,2]-x[:,0]
-    y_planet = y[:,2]-y[:,0]
-
-    plt.plot(x_star,y_star,c='y',label='Star')
-    plt.scatter(x_star[0],y_star[0],c='black',marker='*', lw = 0)
-    plt.scatter(x_star[-1],y_star[-1],c='y',marker='*', lw = 0)
-
-    plt.plot(x_ffp,y_ffp,c='c',label='FFP', lw = 2)
-    plt.scatter(x_ffp[0],y_ffp[0],c='black', lw = 0)
-    plt.scatter(x_ffp[-1],y_ffp[-1],c='c', lw = 0)
-
-    plt.plot(x_planet,y_planet,c='m',label='BP',alpha=0.5)
-    plt.scatter(x_planet[0],y_planet[0],c='black', lw = 0)
-    plt.scatter(x_planet[-1],y_planet[-1],c='m', lw = 0)
-
-    plt.axhline(y=0, xmin=-80, xmax=10, c='black', linestyle='--')
-    plt.axvline(x=0, ymin=-5, ymax=2, c='black', linestyle='--')
-
-    plt.title('Trajectory FFP', fontsize=40)
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.xlabel('$x$ (AU)', fontsize=40)
-    plt.ylabel('$y$ (AU)', fontsize=40)
-    plt.legend(fontsize=40)
-    plt.savefig('./plots/trajectories/'+filename+'.png')
-
-    plt.close()
-
-def plot_orbital_elements(times, eccs, smas, filename):
-
-    f = plt.figure(figsize=(35,15))
-
-    ecc_starbp_ffp = eccs[:,1]
-    ecc_star_bp = eccs[:,2]
-
-    sma_starbp_ffp = smas[:,1]
-    sma_star_bp = smas[:,2]
-
-    #eccentricity
-    subplot = f.add_subplot(1,2,1)
-
-    subplot.plot(times,ecc_starbp_ffp,c='red',label='FFP and Star+BP')
-    subplot.plot(times,ecc_star_bp,c='green',label='BP and Star')
-
-    subplot.set_title('Eccentricity', fontsize=20)
-    subplot.set_xlabel('$t$ (yr)', fontsize=20)
-    subplot.set_ylabel('$e$', fontsize=20)
-    subplot.set_ylim(-0.5,1.5)
-    subplot.legend(fontsize=20)
-
-    #semimajoraxis
-    subplot = f.add_subplot(1,2,2)
-
-    subplot.plot(times,sma_starbp_ffp,c='red',label='FFP and Star+BP')
-    subplot.plot(times,sma_star_bp,c='green',label='BP and Star')
-
-    subplot.set_title('Semimajor Axis', fontsize=20)
-    subplot.set_xlabel('$t$ (yr)', fontsize=20)
-    subplot.set_ylabel('$a$ (AU)', fontsize=20)
-    subplot.legend(fontsize=20)
-
-    plt.savefig('./plots/orbital_elements/'+filename+'.png')
-    plt.close()
+    return df, ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
 
 def create_plots_folders():
     os.system('mkdir plots/')
@@ -158,9 +79,9 @@ def plot_histograms(parameter, amount, df_name):
     if (amount == 10):
         n,b,p = plt.hist(parameter, color = 'c')
     elif(amount == 100):
-        n,b,p = plt.hist(parameter, bins = int(amount/2.0), color = 'c')
+        n,b,p = plt.hist(parameter, bins = 30, color = 'c')
     else:
-        n,b,p = plt.hist(parameter, bins = int(amount/20.0), color = 'c')
+        n,b,p = plt.hist(parameter, bins = 30, color = 'c')
 
     plt.title('Histogram of captures for each '+df_name, fontsize=20)
     plt.xlabel(df_name, fontsize=20)
@@ -182,7 +103,7 @@ def plot_histogram_phi(parameter, df_name):
     plt.xlabel(df_name, fontsize=20)
     plt.ylabel('number of captures', fontsize=20)
     plt.xlim(0.0,360.0)
-    plt.ylim(0,20)
+    # plt.ylim(0,20)
     plt.savefig('./plots/statistics/'+df_name+'.png')
     plt.close()
 
@@ -258,7 +179,7 @@ def plot_threesome(parameters_xaxis, parameters_color, parameters_marker, df_nam
 def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
     #Reading parameters dataframe
-    ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par = read_parameters_df()
+    ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_parameters_df()
 
     #Getting all the ms, as, bs and phis that were combined
     ms_bp_par_uniq = uniq_list(ms_bp_par)
@@ -266,18 +187,18 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     bs_ffp_par_uniq = uniq_list(bs_ffp_par)
     phis_bp_par_uniq = uniq_list(phis_bp_par)
 
+    # print np.sort(bs_ffp_par_uniq)
+
     #Numbers of each parameter
     n_ms_bp_par = len(ms_bp_par_uniq)
     n_as_bp_par = len(as_bp_par_uniq)
     n_bs_ffp_par = len(bs_ffp_par_uniq)
     n_phis_bp_par = len(phis_bp_par_uniq)
 
-    # print np.sort(bs_ffp_par_uniq)
-
     print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
 
     #Number of captures
-    #m_bp
+    # #m_bp
     # plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
     # #a_bp
     # plot_histograms(as_bp, n_as_bp_par, 'a_bp')
@@ -287,14 +208,26 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     #     to_add = np.array(np.array(bs_ffp)[ np.where( df['a_bp']==a_bp_par) ]) / a_bp_par
     #     bs_ffp_over_a_bp = np.concatenate((bs_ffp_over_a_bp, to_add))
     # plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
-    #phi_bp
-    plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
+    # #phi_bp
+    # plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
 
     # for aa in as_bp_par_uniq:
     #     a_indices = np.where(as_bp == aa)
     #     plot_histogram_phi(np.array(phis_bp)[a_indices], 'cuts_a/phi_bp_a_'+str(aa))
 
-    bss = [-8.02345000e-01,-7.23987000e-01,-6.86569000e-01,-6.69088000e-01,-6.68259000e-01,-6.62729000e-01,-6.60570000e-01,-6.59457000e-01,6.59457000e-01,6.60570000e-01,6.62729000e-01,6.68259000e-01,6.69088000e-01,6.86569000e-01,7.23987000e-01,8.02345000e-01]
+    bss = [-2.54438100e+00,-2.29727000e+00,-2.17912800e+00,-2.12390100e+00,-2.12128300e+00,-2.10380800e+00  -2.09698600e+00,
+            -2.09346900e+00,  -1.90848000e+00,  -1.72405100e+00,  -1.52662800e+00,
+            -1.37836200e+00,  -1.30747700e+00,  -1.27434100e+00,  -1.27277000e+00,
+            -1.26228500e+00,  -1.25819200e+00,  -1.25608100e+00,  -6.36160000e-01,
+            -5.08876000e-01,  -4.59454000e-01,  -4.35826000e-01,  -4.24780000e-01,
+            -4.24257000e-01,  -4.20762000e-01,  -4.19397000e-01,  -4.18694000e-01,
+            4.18694000e-01,   4.19397000e-01,   4.20762000e-01,   4.24257000e-01,
+            4.24780000e-01,   4.35826000e-01,   4.59454000e-01,   5.08876000e-01,
+            6.36160000e-01,   1.25608100e+00,   1.25819200e+00,   1.26228500e+00,
+            1.27277000e+00,   1.27434100e+00,   1.30747700e+00,   1.37836200e+00,
+            1.52662800e+00,   1.72405100e+00,   1.90848000e+00,   2.09346900e+00,
+            2.09698600e+00,   2.10380800e+00,   2.12128300e+00,   2.12390100e+00,
+            2.17912800e+00,   2.29727000e+00,   2.54438100e+00]
 
     for bb in bss:
         b_indices = np.where(bs_ffp == bb)
@@ -335,13 +268,10 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
 if __name__ in ('__main__', '__plot__'):
 
-    # #Create file with all the runs made per line
-    # create_parameters_and_status_file()
-
     #Read df
-    df, ms_bp, as_bp, bs_ffp, phis_bp = read_stables_df()
+    df, ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_stables_df()
 
-    # #Plottts
+    #Plottts
     # create_plots_folders()
     #Make statistics plots
     make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp)
