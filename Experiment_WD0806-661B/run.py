@@ -8,25 +8,17 @@ def find_limit_b(r_0, number_r0_in_rinf, mass_ratio):
 def permute(m_bp):
 
     #Fixed Values
-    dt_integration = 0.05 #yr
     m0 = 0.58 #MSun
     m_ffp = 7.5 #MJupiter
     e_bp = 0.0
 
-    n_steps = 12000
-    n_snapshots = int(n_steps/20.0)
+    n_snapshots = 600
     n_r0_in_rinf = 45.0
     b_limit_fraction = 0.3 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    # n_as_bp = 5
-    # n_bs_ffp = 10
-    # n_incs_bp = 5
-    # n_lans_bp = 4
-    # n_phis_bp = 100
-
-    n_as_bp = 5
-    n_bs_ffp = 5
+    n_as_bp = 10
+    n_bs_ffp = 10
     n_incs_bp = 1
     n_lans_bp = 1
     n_phis_bp = 100
@@ -88,7 +80,6 @@ def permute(m_bp):
                                                                                                                                                                                                                     phi_bp_p=phi_bp,
                                                                                                                                                                                                                     inc_bp_p=inc_bp,
                                                                                                                                                                                                                     lan_bp_p=lan_bp,
-                                                                                                                                                                                                                    dt_integration_p=dt_integration,
                                                                                                                                                                                                                     n_snapshots=n_snapshots,
                                                                                                                                                                                                                     n_r0_in_rinf=n_r0_in_rinf)
 

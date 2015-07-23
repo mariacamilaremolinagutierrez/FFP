@@ -12,10 +12,12 @@ def stop_code():
 
 def create_parameters_and_stables_files():
 
+    os.system('mkdir results/')
+
     masses_directories = os.listdir('./particles/')
 
-    with open('./parameters.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\n')
+    with open('./results/parameters.txt', 'w') as outfile:
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
@@ -25,8 +27,8 @@ def create_parameters_and_stables_files():
             infile.close()
     outfile.close()
 
-    with open('./stables.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\n')
+    with open('./results/stables.txt', 'w') as outfile:
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
@@ -77,9 +79,6 @@ def evolve_triple_system(binaries, end_time):
     code.parameters.f_25PN_in = 0.0 #general relativity specifications
     code.parameters.f_25PN_out = 0.0 #general relativity specifications
 
-    # print '\nBINARIES AT START:'
-    # print code.binaries
-
     code.evolve_model(end_time)
 
     ecc_star_bp = code.binaries[0].eccentricity
@@ -92,9 +91,6 @@ def evolve_triple_system(binaries, end_time):
     lan_star_ffp = code.binaries[1].longitude_of_ascending_node
     ap_star_bp = code.binaries[0].argument_of_pericenter
     ap_star_ffp = code.binaries[1].argument_of_pericenter
-
-    # print '\nBINARIES AT END:'
-    # print code.binaries
 
     return ecc_star_bp, ecc_star_ffp, sma_star_bp, sma_star_ffp, inc_star_bp, inc_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
 
@@ -165,19 +161,16 @@ def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star
                                                                                                                         i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,
                                                                                                                         ap_star_ffp_change,ap_star_bp_change))
 
-if __name__ in ('__main__','__plot__'):
+def main():
 
-    endtime = 10000000.0
     m_star = 0.58
     m_ffp = 7.5
 
     create_parameters_and_stables_files()
 
-    # stop_code()
-
-    secular_stables_file = open('./secular_stables.txt','w')
-    stables_file = open('./stables.txt','r')
-    fractional_changes_file = open('./fractional_changes.txt','w')
+    secular_stables_file = open('./results/secular_stables.txt','w')
+    stables_file = open('./results/stables.txt','r')
+    fractional_changes_file = open('./results/fractional_changes.txt','w')
 
     #write the header
     line = stables_file.readline()
@@ -208,9 +201,15 @@ if __name__ in ('__main__','__plot__'):
         ap_star_ffp = float(parts[12])
         ap_star_bp = float(parts[13])
 
-        energy_change = float(parts[15].split('\t')[0])
+        energy_change = float(parts[15])
+        #integration_time = float(parts[16].split('\t')[0])
 
-        print cont
+        endtime = 650.0*1000.0
+        #endtime = integration_time*1000.0
+        #new_integration_time = endtime + integration_time
+        new_integration_time = endtime*1001.0
+
+        print cont, endtime, m_bp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
 
         if (e_star_bp < 1.0 and e_star_ffp < 1.0 and a_star_bp > 0.0 and a_star_ffp > 0.0):
 
@@ -218,12 +217,12 @@ if __name__ in ('__main__','__plot__'):
 
             run_time = float(parts[14]) + time.time() - start_time
 
-            secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change))
+            secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change,new_integration_time))
 
             save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file)
 
-            # if(cont==5):
-            #     break
+            if(cont==15):
+                break
 
             cont += 1
 
@@ -232,3 +231,28 @@ if __name__ in ('__main__','__plot__'):
     secular_stables_file.close()
     stables_file.close()
     fractional_changes_file.close()
+
+if __name__ in ('__main__','__plot__'):
+
+    #main()
+
+    end_time = 650.0*20.0
+    m_star = 0.58
+    m_bp = 2.277778
+    m_ffp = 7.5
+    e_star_bp = 0.139051
+    e_star_ffp = 0.98263
+    a_star_bp = 1.081941
+    a_star_ffp = 45.117804
+    i_star_bp = 0.0
+    i_star_ffp = 180.0
+    lan_star_bp = 0.0
+    lan_star_ffp = 0.0
+    ap_star_bp = 118.87376
+    ap_star_ffp = -8.980118
+
+    print 'Initial Values:\n'
+    print m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
+    print 'Final Values:\n'
+    # e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf
+    print run(end_time, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
