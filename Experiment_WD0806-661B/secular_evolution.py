@@ -120,46 +120,68 @@ def run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_f
 
 def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file):
     #first = initial, second = final
-    e_star_ffp_change = (e_sf-e_star_ffp)/e_star_ffp
-    e_star_bp_change = (e_sb-e_star_bp)/e_star_bp
+    if (e_star_ffp != 0.0 and e_sf != 0.0):
+        e_star_ffp_change = (e_sf-e_star_ffp)/e_star_ffp
+        e_sfs = ''
+    else:
+        e_star_ffp_change = (e_sf-e_star_ffp)
+        e_sfs = 'D'
+
+    if (e_star_bp != 0.0 and e_sb != 0.0):
+        e_star_bp_change = (e_sb-e_star_bp)/e_star_bp
+        e_sbs = ''
+    else:
+        e_star_bp_change = (e_sb-e_star_bp)
+        e_sbs = 'D'
 
     a_star_ffp_change = (a_sf-a_star_ffp)/a_star_ffp
     a_star_bp_change = (a_sb-a_star_bp)/a_star_bp
 
-    if (i_star_ffp != 0.0):
+    if (i_star_ffp != 0.0 and i_sf != 0.0):
         i_star_ffp_change = (i_sf-i_star_ffp)/i_star_ffp
         i_sfs = ''
     else:
         i_star_ffp_change = (i_sf-i_star_ffp)
         i_sfs = 'D'
 
-    if (i_star_bp != 0.0):
+    if (i_star_bp != 0.0 and i_sb != 0.0):
         i_star_bp_change = (i_sb-i_star_bp)/i_star_bp
         i_sbs = ''
     else:
         i_star_bp_change = (i_sb-i_star_bp)
         i_sbs = 'D'
 
-    if (lan_star_ffp != 0.0):
+    if (lan_star_ffp != 0.0 and lan_sf != 0.0):
         lan_star_ffp_change = (lan_sf-lan_star_ffp)/lan_star_ffp
         lan_sfs = ''
     else:
         lan_star_ffp_change = (lan_sf-lan_star_ffp)
         lan_sfs = 'D'
 
-    if (lan_star_bp != 0.0):
+    if (lan_star_bp != 0.0 and lan_sb != 0.0):
         lan_star_bp_change = (lan_sb-lan_star_bp)/lan_star_bp
         lan_sbs = ''
     else:
         lan_star_bp_change = (lan_sb-lan_star_bp)
         lan_sbs = 'D'
 
-    ap_star_ffp_change = (ap_sf-ap_star_ffp)/ap_star_ffp
-    ap_star_bp_change = (ap_sb-ap_star_bp)/ap_star_bp
+    if (ap_star_ffp != 0.0 and ap_sf != 0.0):
+        ap_star_ffp_change = (ap_sf-ap_star_ffp)/ap_star_ffp
+        ap_sfs = ''
+    else:
+        ap_star_ffp_change = (ap_sf-ap_star_ffp)
+        ap_sfs = 'D'
 
-    fractional_changes_file.write(('%f\t%f\t%f\t%f\t'+i_sfs+'%f\t'+i_sbs+'%f\t'+lan_sfs+'%f\t'+lan_sbs+'%f\t%f\t%f\n')%(e_star_ffp_change,e_star_bp_change,a_star_ffp_change,a_star_bp_change,
-                                                                                                                        i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,
-                                                                                                                        ap_star_ffp_change,ap_star_bp_change))
+    if (ap_star_bp != 0.0 and ap_sb != 0.0):
+        ap_star_bp_change = (ap_sb-ap_star_bp)/ap_star_bp
+        ap_sbs = ''
+    else:
+        ap_star_bp_change = (ap_sb-ap_star_bp)
+        ap_sbs = 'D'
+
+    fractional_changes_file.write((e_sfs+'%f\t'+e_sbs+'%f\t%f\t%f\t'+i_sfs+'%f\t'+i_sbs+'%f\t'+lan_sfs+'%f\t'+lan_sbs+'%f\t'+ap_sbs+'%f\t'+ap_sbs+'%f\n')%(e_star_ffp_change,e_star_bp_change,a_star_ffp_change,a_star_bp_change,
+                                                                                                                                                            i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,
+                                                                                                                                                            ap_star_ffp_change,ap_star_bp_change))
 
 def main():
 
@@ -202,12 +224,10 @@ def main():
         ap_star_bp = float(parts[13])
 
         energy_change = float(parts[15])
-        #integration_time = float(parts[16].split('\t')[0])
+        integration_time = float(parts[16].split('\t')[0])
 
-        endtime = 650.0*1000.0
-        #endtime = integration_time*1000.0
-        #new_integration_time = endtime + integration_time
-        new_integration_time = endtime*1001.0
+        endtime = integration_time*20.0
+        new_integration_time = endtime + integration_time
 
         print cont, endtime, m_bp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
 
@@ -221,9 +241,9 @@ def main():
 
             save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file)
 
-            if(cont==15):
+            if(cont==50):
                 break
-
+            
             cont += 1
 
         line = stables_file.readline()
@@ -234,25 +254,29 @@ def main():
 
 if __name__ in ('__main__','__plot__'):
 
-    #main()
+    main()
 
-    end_time = 650.0*20.0
-    m_star = 0.58
-    m_bp = 2.277778
-    m_ffp = 7.5
-    e_star_bp = 0.139051
-    e_star_ffp = 0.98263
-    a_star_bp = 1.081941
-    a_star_ffp = 45.117804
-    i_star_bp = 0.0
-    i_star_ffp = 180.0
-    lan_star_bp = 0.0
-    lan_star_ffp = 0.0
-    ap_star_bp = 118.87376
-    ap_star_ffp = -8.980118
-
-    print 'Initial Values:\n'
-    print m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
-    print 'Final Values:\n'
-    # e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf
-    print run(end_time, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
+    # start_running_time = time.time()
+    #
+    # end_time = 650.0*15.0
+    # m_star = 0.58
+    # m_bp = 2.277778
+    # m_ffp = 7.5
+    # e_star_bp = 0.139051
+    # e_star_ffp = 0.98263
+    # a_star_bp = 1.081941
+    # a_star_ffp = 45.117804
+    # i_star_bp = 0.0
+    # i_star_ffp = 180.0
+    # lan_star_bp = 0.0
+    # lan_star_ffp = 0.0
+    # ap_star_bp = 118.87376
+    # ap_star_ffp = -8.980118
+    #
+    # print 'Initial Values:\n'
+    # print e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
+    # print 'Final Values:\n'
+    # # e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf
+    # print run(end_time, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
+    #
+    # print '\nRunning time: ', time.time() - start_running_time

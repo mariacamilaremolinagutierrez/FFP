@@ -116,7 +116,7 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf):
 
     return bodies
 
-def save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter):
+def save_particles_to_file(bodies, bodies_to_save, bodies_filename, time, converter):
     #Add attributes that I'm interested in to the bodies_to_save
     bodies_to_save.position = converter.to_si(bodies.position).as_quantity_in(units.AU)
     bodies_to_save.velocity = converter.to_si(bodies.velocity).as_quantity_in(units.kms)
@@ -170,7 +170,7 @@ def is_hill_stable(m_values, a_values, e_values, converter):
     else:
         return False
 
-def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, bodies_filename):
+def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, path):
 
     #Particles that will be saved in the file
     bodies_to_save = Particles(number_of_planets+2)
@@ -192,6 +192,9 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
 
     E_initial = gravity.kinetic_energy + gravity.potential_energy
     DeltaE_max = 0.0 | nbody_system.energy
+
+    snapshot_number = 1
+    os.system('mkdir ./files/'+path)
 
     while time<=t_end:
 
@@ -230,17 +233,21 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
         bodies[2].eccentricity = e_star_bp
         bodies[2].semimajoraxis = sma_star_bp
 
-        save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter)
+        save_particles_to_file(bodies, bodies_to_save, './files/'+path+'/'+str(snapshot_number)+'.hdf5', time, converter)
+
+        # if (snapshot_number == 5):
+        #     break
 
         time += dt_snapshots
+        snapshot_number += 1
 
     #To get last orbital elements
     #Star and FFP
     binary = [star, ffp]
-    b1_mass1, b1_mass2, b1_semimajor_axis, b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per = my_orbital_elements_from_binary(binary)
+    b1_mass1, b1_mass2, b1_semimajor_axis, b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per = orbital_elements_from_binary(binary)
     #Star and BP
     binary = [star, bp]
-    b2_mass1, b2_mass2, b2_semimajor_axis, b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per = my_orbital_elements_from_binary(binary)
+    b2_mass1, b2_mass2, b2_semimajor_axis, b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per = orbital_elements_from_binary(binary)
 
     #To check Hill stability
     #Star+BP and FFP
@@ -265,7 +272,7 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
 
     gravity.stop()
 
-    return x,y,times,system_energies,max_energy_change,is_stable,converter.to_si(b1_semimajor_axis).value_in(units.AU), b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per, converter.to_si(b2_semimajor_axis).value_in(units.AU), b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per
+    return x, y, times, system_energies, max_energy_change, is_stable,converter.to_si(b1_semimajor_axis).value_in(units.AU), b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per, converter.to_si(b2_semimajor_axis).value_in(units.AU), b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per
 
 def plot_trajectory(x,y,number_of_planets, filename):
 
@@ -360,7 +367,7 @@ def stop_code():
     import sys
     sys.exit()
 
-def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, n_steps=10000, path_filename='./particles/m/m_a_b_p_.hdf5', n_snapshots=500):
+def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, n_steps=10000, path='./m/', n_snapshots=500):
     """
     Units: t_end_p(yr), m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
     """
@@ -380,11 +387,11 @@ def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a
     bodies = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, b_ffp, r_inf)
 
     #Evolve time
-    x,y,times,system_energies,max_energy_change,is_stable,b1_semimajor_axis, b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per, b2_semimajor_axis, b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per = evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, path_filename)
+    x,y,times,system_energies,max_energy_change,is_stable,b1_semimajor_axis, b1_eccentricity, b1_true_anomaly, b1_inclination, b1_long_asc_node, b1_arg_per, b2_semimajor_axis, b2_eccentricity, b2_true_anomaly, b2_inclination, b2_long_asc_node, b2_arg_per = evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, path)
 
     name = 'm'+str(m0_p)+'_a'+str(a_bp_p)+'_b'+str(b_ffp_p)+'_p'+str(phi_bp_p)
 
-    print 'Name:', name
+    print '\nName:', name
     print 'Max Energy Change:', max_energy_change
     print 'Is Hill stable?:', is_stable
     print '\nBinary Star and FFP:'
@@ -396,19 +403,22 @@ def run_capture(t_end_p=650.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a
 
 if __name__ in ('__main__', '__plot__'):
 
+    os.system('mkdir ./files/')
+
     #This one starts down, is similar to next one
-    m1 = 1.188889
-    a1 = 1.000000
-    b1 = 11.232833
-    p1 = 229.458778
-    f1 = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02'
+    m = 1.188889
+    a = 1.000000
+    b = 11.232833
+    p = 229.458778
+    f = 'm1.188889e+00_a1.000000e+00_b1.123283e+01_p2.294588e+02'
+
+    run_capture(t_end_p=65000.0*15, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m, a_bp_p=a, b_ffp_p=b, phi_bp_p=p, n_steps=1200000*15, path=f, n_snapshots=60000*15)
 
     #This one is at -300 and seem to be going further
-    m2 = 1.188889
-    a2 = 1.000000
-    b2 = -8.023452
-    p2 = 275.241762
-    f2 = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
+    m = 1.188889
+    a = 1.000000
+    b = -8.023452
+    p = 275.241762
+    f = 'm1.188889e+00_a1.000000e+00_b-8.023452e+00_p2.752418e+02'
 
-    run_capture(t_end_p=65000.0*15, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m1, a_bp_p=a1, b_ffp_p=b1, phi_bp_p=p1, n_steps=1200000*15, path_filename='./'+f1+'.hdf5', n_snapshots=60000*15)
-    #run_capture(t_end_p=100000.0, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m2, a_bp_p=a2, b_ffp_p=b2, phi_bp_p=p2, n_steps=2000000, path_filename='./'+f2+'.hdf5', n_snapshots=80000)
+    run_capture(t_end_p=65000.0*15, m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=m, a_bp_p=a, b_ffp_p=b, phi_bp_p=p, n_steps=1200000*15, path=f, n_snapshots=60000*15)

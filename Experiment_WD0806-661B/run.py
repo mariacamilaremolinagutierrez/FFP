@@ -23,6 +23,8 @@ def permute(m_bp):
     n_lans_bp = 1
     n_phis_bp = 100
 
+    total_permutations = n_as_bp*n_bs_ffp*n_incs_bp*n_lans_bp*n_phis_bp
+
     #Variable parameters
     as_bp = np.linspace(1.0,50.0,n_as_bp) #AU
     incs_bp = np.linspace(0,90.0,n_incs_bp) #degrees
@@ -62,6 +64,9 @@ def permute(m_bp):
                     np.random.seed(12)
 
                     for j in range(n_phis_bp):
+
+                        #status
+                        res = os.system('echo '+str(i)+'/'+str(int(total_permutations))+' >> ./particles/'+m_bp_filename+'/status.txt')
 
                         phi_bp = np.random.random()*360.0 #degrees (this should be 1000 phis)
 
