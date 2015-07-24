@@ -317,8 +317,8 @@ def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ff
     bodies, time_pericenter, orbital_period_bp = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf)
 
     #Evolve time
-    t_end = 4.0*time_pericenter
-    dt_integration = orbital_period_bp/1000.0
+    t_end = 5.0*time_pericenter
+    dt_integration = orbital_period_bp/100.0
     max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots)
 
     return converter.to_si(t_end).value_in(units.yr), max_energy_change, is_stable, e_star_ffp, e_star_bp, converter.to_si(sma_star_ffp).value_in(units.AU), converter.to_si(sma_star_bp).value_in(units.AU), inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp

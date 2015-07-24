@@ -30,23 +30,21 @@ def permute(m_bp):
     incs_bp = np.linspace(0,90.0,n_incs_bp) #degrees
     lans_bp = np.linspace(0.0,180.0,n_lans_bp) #degrees
 
+    #Filenames to write info
     m_bp_filename = ('m%.4e')%(m_bp)
+    filename_parameters = './particles/'+m_bp_filename+'/parameters_'+m_bp_filename+'.txt'
+    filename_stables = './particles/'+m_bp_filename+'/stables_'+m_bp_filename+'.txt'
 
     #Counting the lines
     try:
         par = open('./particles/'+m_bp_filename+'/parameters_'+m_bp_filename+'.txt','r')
         num_runs = sum(1 for line in par)
         par.close()
-        file_parameters = open('./particles/'+m_bp_filename+'/parameters_'+m_bp_filename+'.txt','a')
     except:
         num_runs = 0
         os.makedirs('./particles/'+m_bp_filename)
-        file_parameters = open('./particles/'+m_bp_filename+'/parameters_'+m_bp_filename+'.txt','w')
 
     i=1
-
-    #File for the stables
-    file_stables = open('./particles/'+m_bp_filename+'/stables_'+m_bp_filename+'.txt','a')
 
     mass_ratio = m_ffp/m_bp
 
@@ -65,13 +63,14 @@ def permute(m_bp):
 
                     for j in range(n_phis_bp):
 
-                        #status
-                        res = os.system('echo '+str(i)+'/'+str(int(total_permutations))+' >> ./particles/'+m_bp_filename+'/status.txt')
-
-                        phi_bp = np.random.random()*360.0 #degrees (this should be 1000 phis)
+                        phi_bp = np.random.random()*360.0
 
                         #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
                         if (i>num_runs):
+
+                            #status
+                            res = os.system('echo '+str(i)+'/'+str(int(total_permutations))+' >> ./particles/'+m_bp_filename+'/status.txt')
+
                             #Time starts
                             start_time = time.time()
 
@@ -91,17 +90,17 @@ def permute(m_bp):
                             #Time stops
                             duration = time.time()-start_time
 
-                            #Write in File
-                            file_parameters.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end))
+                            #Write in files
+                            line = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end)
+                            command = 'echo "'+line+'" >> '+filename_parameters
+                            os.system(command)
 
                             if(is_stable):
-                                file_stables.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end))
+                                command = 'echo "'+line+'" >> '+filename_stables
+                                os.system(command)
 
                         #Advance counter
                         i += 1
-
-    file_parameters.close()
-    file_stables.close()
 
 if __name__ in ('__main__', '__plot__'):
 
