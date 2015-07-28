@@ -17,7 +17,7 @@ def create_parameters_and_stables_files():
     masses_directories = os.listdir('./particles/')
 
     with open('./results/parameters.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
@@ -28,7 +28,7 @@ def create_parameters_and_stables_files():
     outfile.close()
 
     with open('./results/stables.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
         for i in range(len(masses_directories)):
             mass_dir = masses_directories[i]
             fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
@@ -190,6 +190,8 @@ def main():
 
     create_parameters_and_stables_files()
 
+    # stop_code()
+
     secular_stables_file = open('./results/secular_stables.txt','w')
     stables_file = open('./results/stables.txt','r')
     fractional_changes_file = open('./results/fractional_changes.txt','w')
@@ -243,7 +245,7 @@ def main():
 
             if(cont==50):
                 break
-            
+
             cont += 1
 
         line = stables_file.readline()

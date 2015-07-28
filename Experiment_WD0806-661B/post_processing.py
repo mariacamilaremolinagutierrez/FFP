@@ -20,12 +20,14 @@ def stop_code():
 
 def read_parameters_df():
 
-    df = pd.read_csv('./parameters.txt', sep='\t')
+    df = pd.read_csv('./results/stables.txt', sep='\t', dtype=np.float64)
 
     ms_bp = df['m_bp']
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
+    incs_bp = df['inc_bp']
+    lans_bp = df['lan_bp']
     es_star_bp = df['e_star_bp']
     es_star_ffp = df['e_star_ffp']
     smas_star_ffp = df['sma_star_ffp']
@@ -37,16 +39,18 @@ def read_parameters_df():
     aps_star_ffp = df['ap_star_ffp']
     aps_star_bp = df['ap_star_bp']
 
-    return ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
+    return ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
 
 def read_stables_df():
 
-    df = pd.read_csv('./stables.txt', sep='\t', dtype=np.float64)
+    df = pd.read_csv('./results/stables.txt', sep='\t', dtype=np.float64)
 
     ms_bp = df['m_bp']
     as_bp = df['a_bp']
     bs_ffp = df['b_ffp']
     phis_bp = df['phi_bp']
+    incs_bp = df['inc_bp']
+    lans_bp = df['lan_bp']
     es_star_bp = df['e_star_bp']
     es_star_ffp = df['e_star_ffp']
     smas_star_ffp = df['sma_star_ffp']
@@ -58,7 +62,7 @@ def read_stables_df():
     aps_star_ffp = df['ap_star_ffp']
     aps_star_bp = df['ap_star_bp']
 
-    return df, ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
+    return df, ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
 
 def create_plots_folders():
     os.system('mkdir plots/')
@@ -77,7 +81,7 @@ def plot_histograms(parameter, amount, df_name):
     parameter = np.array(parameter)
 
     if (amount == 10):
-        n,b,p = plt.hist(parameter, color = 'c')
+        n,b,p = plt.hist(parameter, bins = 10, color = 'c')
     elif(amount == 100):
         n,b,p = plt.hist(parameter, bins = 30, color = 'c')
     else:
@@ -179,43 +183,50 @@ def plot_threesome(parameters_xaxis, parameters_color, parameters_marker, df_nam
 def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
     #Reading parameters dataframe
-    ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_parameters_df()
+    ms_bp_par, as_bp_par, bs_ffp_par, phis_bp_par, incs_bp_par, lans_bp_par, es_star_bp_par, es_star_ffp_par, smas_star_ffp_par, smas_star_bp_par, incs_star_ffp_par, incs_star_bp_par, lans_star_ffp_par, lans_star_bp_par, aps_star_ffp_par, aps_star_bp_par = read_parameters_df()
 
     #Getting all the ms, as, bs and phis that were combined
     ms_bp_par_uniq = uniq_list(ms_bp_par)
     as_bp_par_uniq = uniq_list(as_bp_par)
     bs_ffp_par_uniq = uniq_list(bs_ffp_par)
     phis_bp_par_uniq = uniq_list(phis_bp_par)
-
-    # print np.sort(bs_ffp_par_uniq)
+    incs_bp_par_uniq = uniq_list(incs_bp_par)
+    lans_bp_par_uniq = uniq_list(lans_bp_par)
 
     #Numbers of each parameter
     n_ms_bp_par = len(ms_bp_par_uniq)
     n_as_bp_par = len(as_bp_par_uniq)
     n_bs_ffp_par = len(bs_ffp_par_uniq)
     n_phis_bp_par = len(phis_bp_par_uniq)
+    n_incs_bp_par = len(incs_bp_par_uniq)
+    n_lans_bp_par = len(lans_bp_par_uniq)
 
-    print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par
+    print n_ms_bp_par, n_as_bp_par, n_bs_ffp_par, n_phis_bp_par, n_incs_bp_par, n_lans_bp_par
 
     #Number of captures
-    # #m_bp
-    # plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
-    # #a_bp
-    # plot_histograms(as_bp, n_as_bp_par, 'a_bp')
-    # #b_ffp
-    # bs_ffp_over_a_bp = np.array([])
-    # for a_bp_par in as_bp_par_uniq:
-    #     to_add = np.array(np.array(bs_ffp)[ np.where( df['a_bp']==a_bp_par) ]) / a_bp_par
-    #     bs_ffp_over_a_bp = np.concatenate((bs_ffp_over_a_bp, to_add))
-    # plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
-    # #phi_bp
-    # plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
+    #m_bp
+    plot_histograms(ms_bp, n_ms_bp_par, 'm_bp')
+    #a_bp
+    plot_histograms(as_bp, n_as_bp_par, 'a_bp')
+    #b_ffp
+    bs_ffp_over_a_bp = np.array([])
+    for a_bp_par in as_bp_par_uniq:
+        to_add = np.array(np.array(bs_ffp)[ np.where( df['a_bp']==a_bp_par) ]) / a_bp_par
+        bs_ffp_over_a_bp = np.concatenate((bs_ffp_over_a_bp, to_add))
+    plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
+    #phi_bp
+    plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
 
-    # for aa in as_bp_par_uniq:
-    #     a_indices = np.where(as_bp == aa)
-    #     plot_histogram_phi(np.array(phis_bp)[a_indices], 'cuts_a/phi_bp_a_'+str(aa))
+    for aa in as_bp_par_uniq:
+        a_indices = np.where(as_bp == aa)
+        plot_histogram_phi(np.array(phis_bp)[a_indices], 'cuts_a/phi_bp_a_'+str(aa))
 
-    bss = [-2.54438100e+00,-2.29727000e+00,-2.17912800e+00,-2.12390100e+00,-2.12128300e+00,-2.10380800e+00  -2.09698600e+00,
+    for mm in ms_bp_par_uniq:
+        m_indices = np.where(ms_bp == mm)
+        plot_histogram_phi(np.array(phis_bp)[m_indices], 'cuts_m/phi_bp_m_'+str(mm))
+
+    bss = [-2.54438100e+00, -2.29727000e+00,-2.17912800e+00,
+            -2.12390100e+00,  -2.12128300e+00,  -2.10380800e+00, -2.09698600e+00,
             -2.09346900e+00,  -1.90848000e+00,  -1.72405100e+00,  -1.52662800e+00,
             -1.37836200e+00,  -1.30747700e+00,  -1.27434100e+00,  -1.27277000e+00,
             -1.26228500e+00,  -1.25819200e+00,  -1.25608100e+00,  -6.36160000e-01,
@@ -235,41 +246,41 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
         if (len(b_subset)!=0):
             plot_histogram_phi(b_subset, 'cuts_b/phi_bp_b_'+str(bb))
 
-    # #Plot parameters
-    # df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
-    # latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
-    # plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
-    #
-    # df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
-    # latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
-    # plot_parameters(phis_bp, as_bp, bs_ffp, df_names, latex_names)
-    #
-    # df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
-    # latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
-    # plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
-    #
-    # #Plot threesomes
-    # df_names = ['m_bp', 'b_ffp', 'a_bp']
-    # latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
-    # plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
-    #
-    # df_names = ['b_ffp', 'm_bp', 'a_bp']
-    # latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$a_{BP}$']
-    # plot_threesome(bs_ffp, ms_bp, as_bp, df_names, latex_names)
-    #
-    # df_names = ['a_bp', 'b_ffp', 'm_bp']
-    # latex_names = ['$a_{BP} \quad \mathrm{(AU)}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP}$']
-    # plot_threesome(as_bp, bs_ffp, ms_bp, df_names, latex_names)
-    #
-    # df_names = ['b_ffp', 'a_bp', 'm_bp']
-    # latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP} \quad \mathrm{(AU)}$', '$m_{BP}$']
-    # plot_threesome(bs_ffp, as_bp, ms_bp, df_names, latex_names)
+    #Plot parameters
+    df_names = ['phi_bp', 'b_ffp', 'a_bp', 'm_bp']
+    latex_names = ['$\phi_{BP}$', '$b_{FFP}$', '$a_{BP}$', '$m_{BP}$']
+    plot_parameters(phis_bp, bs_ffp, as_bp, df_names, latex_names)
+
+    df_names = ['phi_bp', 'a_bp', 'b_ffp', 'm_bp']
+    latex_names = ['$\phi_{BP}$', '$a_{BP}$', '$b_{FFP}$', '$m_{BP}$']
+    plot_parameters(phis_bp, as_bp, bs_ffp, df_names, latex_names)
+
+    df_names = ['phi_bp', 'm_bp', 'a_bp', 'b_ffp']
+    latex_names = ['$\phi_{BP}$', '$m_{BP}$', '$a_{BP}$', '$b_{FFP}$']
+    plot_parameters(phis_bp, ms_bp, as_bp, df_names, latex_names)
+
+    #Plot threesomes
+    df_names = ['m_bp', 'b_ffp', 'a_bp']
+    latex_names = ['$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP}$']
+    plot_threesome(ms_bp, bs_ffp, as_bp, df_names, latex_names)
+
+    df_names = ['b_ffp', 'm_bp', 'a_bp']
+    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP} \quad \mathrm{(M_{Jupiter})}$', '$a_{BP}$']
+    plot_threesome(bs_ffp, ms_bp, as_bp, df_names, latex_names)
+
+    df_names = ['a_bp', 'b_ffp', 'm_bp']
+    latex_names = ['$a_{BP} \quad \mathrm{(AU)}$', '$b_{FFP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    plot_threesome(as_bp, bs_ffp, ms_bp, df_names, latex_names)
+
+    df_names = ['b_ffp', 'a_bp', 'm_bp']
+    latex_names = ['$b_{FFP} \quad \mathrm{(AU)}$', '$a_{BP} \quad \mathrm{(AU)}$', '$m_{BP}$']
+    plot_threesome(bs_ffp, as_bp, ms_bp, df_names, latex_names)
 
 
 if __name__ in ('__main__', '__plot__'):
 
     #Read df
-    df, ms_bp, as_bp, bs_ffp, phis_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_stables_df()
+    df, ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_stables_df()
 
     #Plottts
     # create_plots_folders()
