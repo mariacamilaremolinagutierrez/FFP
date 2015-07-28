@@ -1,17 +1,8 @@
-import os, math
+import os
 import pandas as pd
 import numpy as np
-import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-
-from sympy.solvers import solve
-from sympy import Symbol
-
-from amuse.support import io
-from amuse.units import units
-from amuse.datamodel import Particles
-from amuse.ext.orbital_elements import orbital_elements_from_binary
 
 def stop_code():
     print '\nSTOP'

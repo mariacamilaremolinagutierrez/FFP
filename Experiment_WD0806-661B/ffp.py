@@ -1,11 +1,7 @@
-import math, os
+import math
 import numpy as np
 
-from matplotlib.pyplot import *
-from sympy.solvers import solve
-from sympy import Symbol
-
-from amuse.units import units, constants, nbody_system
+from amuse.units import units, nbody_system
 from amuse.datamodel import Particles
 from amuse.community.smalln.interface import SmallN
 from amuse.community.kepler.interface import Kepler
@@ -27,11 +23,7 @@ def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
 
     return stars_gravity
 
-def get_parabolic_velocity(m0, m_ffp, b_ffp, r_inf, m_bp, a_bp, phi_bp):
-
-    cm_M = m0 + m_bp
-    cm_x = m_bp*a_bp*math.cos(np.radians(phi_bp))/cm_M
-    cm_y = m_bp*a_bp*math.sin(np.radians(phi_bp))/cm_M
+def get_parabolic_velocity(m0, m_ffp, m_bp, b_ffp, r_inf):
 
     M = m0 + m_ffp + m_bp
     r = (r_inf**2 + b_ffp**2).sqrt()
@@ -83,8 +75,6 @@ def my_orbital_elements_from_binary(binary, G=nbody_system.G):
     if (e_vector.lengths() == 0.0): ### Argument of pericenter and true anomaly cannot be determined for e = 0, in this case return 1.0 for the cosines ###
         cos_arg_per = 1.0
         arg_per=0.
-        cos_true_anomaly = 1.0
-        true_anomaly=0.
     else:
         e_vector_unit = e_vector/e_vector.lengths()
 
@@ -119,7 +109,7 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_f
     #Zeros and parabolic velocity
     zero_p = 0.0 | nbody_system.length
     zero_v = 0.0 | nbody_system.speed
-    parabolic_velocity = get_parabolic_velocity(m0, m_ffp, b_ffp, r_inf, m_bp, a_bp, phi_bp)
+    parabolic_velocity = get_parabolic_velocity(m0, m_ffp, m_bp, b_ffp, r_inf)
     #Central star
     m0_ffp[0].mass = m0
     m0_ffp[0].position = (zero_p,zero_p,zero_p)

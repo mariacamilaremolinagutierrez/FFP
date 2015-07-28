@@ -3,40 +3,12 @@ from amuse.datamodel import Particles
 from amuse.units import units
 
 import numpy as np
-import os, time
+import os, time, sys
 
 def stop_code():
     print '\nSTOP'
     import sys
     sys.exit()
-
-def create_parameters_and_stables_files():
-
-    os.system('mkdir results/')
-
-    masses_directories = os.listdir('./particles/')
-
-    with open('./results/parameters.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
-        for i in range(len(masses_directories)):
-            mass_dir = masses_directories[i]
-            fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
-            infile.close()
-    outfile.close()
-
-    with open('./results/stables.txt', 'w') as outfile:
-        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
-        for i in range(len(masses_directories)):
-            mass_dir = masses_directories[i]
-            fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
-            infile.close()
-    outfile.close()
 
 def make_triple_system(m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp):
 
@@ -118,7 +90,7 @@ def run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_f
 
     return ecc_star_bp, ecc_star_ffp, sma_star_bp.value_in(units.AU), sma_star_ffp.value_in(units.AU), np.rad2deg(inc_star_bp), np.rad2deg(inc_star_ffp), np.rad2deg(lan_star_bp), np.rad2deg(lan_star_ffp), np.rad2deg(ap_star_bp), np.rad2deg(ap_star_ffp)
 
-def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file):
+def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, filename_fractional_changes):
     #first = initial, second = final
     if (e_star_ffp != 0.0 and e_sf != 0.0):
         e_star_ffp_change = (e_sf-e_star_ffp)/e_star_ffp
@@ -179,30 +151,27 @@ def save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star
         ap_star_bp_change = (ap_sb-ap_star_bp)
         ap_sbs = 'D'
 
-    fractional_changes_file.write((e_sfs+'%f\t'+e_sbs+'%f\t%f\t%f\t'+i_sfs+'%f\t'+i_sbs+'%f\t'+lan_sfs+'%f\t'+lan_sbs+'%f\t'+ap_sbs+'%f\t'+ap_sbs+'%f\n')%(e_star_ffp_change,e_star_bp_change,a_star_ffp_change,a_star_bp_change,
-                                                                                                                                                            i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,
-                                                                                                                                                            ap_star_ffp_change,ap_star_bp_change))
+    to_write = (e_sfs+'%f\t'+e_sbs+'%f\t%f\t%f\t'+i_sfs+'%f\t'+i_sbs+'%f\t'+lan_sfs+'%f\t'+lan_sbs+'%f\t'+ap_sfs+'%f\t'+ap_sbs+'%f')%(e_star_ffp_change,e_star_bp_change,a_star_ffp_change,a_star_bp_change,i_star_ffp_change,i_star_bp_change,lan_star_ffp_change,lan_star_bp_change,ap_star_ffp_change,ap_star_bp_change)
+    command = 'echo "'+to_write+'" >> '+filename_fractional_changes
+    os.system(command)
 
-def main():
-
+    
+def evolve_secular_per_mass(mass_dir):
+    
     m_star = 0.58
     m_ffp = 7.5
-
-    create_parameters_and_stables_files()
-
-    # stop_code()
-
-    secular_stables_file = open('./results/secular_stables.txt','w')
-    stables_file = open('./results/stables.txt','r')
-    fractional_changes_file = open('./results/fractional_changes.txt','w')
-
-    #write the header
+    
+    filename_stables = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
+    filename_secular_stables = './particles/'+mass_dir+'/secular_stables_'+mass_dir+'.txt'
+    filename_fractional_changes = './particles/'+mass_dir+'/fractional_changes_'+mass_dir+'.txt'
+    filename_status = './particles/'+mass_dir+'/secular_status.txt'
+    
+    stables_file = open(filename_stables,'r')    
+    
+    cont = 1    
+    
     line = stables_file.readline()
-    secular_stables_file.write(line)
-
-    cont = 1
-
-    line = stables_file.readline()
+    
     while(line != ''):
 
         start_time = time.time()
@@ -230,33 +199,43 @@ def main():
 
         endtime = integration_time*20.0
         new_integration_time = endtime + integration_time
+        
+        to_write = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f')%(cont,endtime,m_bp,e_star_bp,e_star_ffp,a_star_bp,a_star_ffp,i_star_bp,i_star_ffp,lan_star_bp,lan_star_ffp,ap_star_bp,ap_star_ffp)
+        command = 'echo "'+to_write+'" >> '+filename_status
+        os.system(command)
+        
+        #Secular Evolve
+        e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf = run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
 
-        print cont, endtime, m_bp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp
+        #Running time        
+        run_time = float(parts[14]) + time.time() - start_time
+        
+        #Save final elements in file after secular evolution        
+        to_write = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change,new_integration_time)
+        command = 'echo "'+to_write+'" >> '+filename_secular_stables
+        os.system(command)
+        
+        #Save fractional changes in orbital elements
+        save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, filename_fractional_changes)
 
-        if (e_star_bp < 1.0 and e_star_ffp < 1.0 and a_star_bp > 0.0 and a_star_ffp > 0.0):
+        if(cont==4):
+            break
 
-            e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf = run(endtime, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
-
-            run_time = float(parts[14]) + time.time() - start_time
-
-            secular_stables_file.write(('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f\n')%(m_bp,a_bp,b_ffp,phi_bp,e_sf,e_sb,a_sf,a_sb,i_sf,i_sb,lan_sf,lan_sb,ap_sf,ap_sb,run_time,energy_change,new_integration_time))
-
-            save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, fractional_changes_file)
-
-            if(cont==50):
-                break
-
-            cont += 1
+        cont += 1
 
         line = stables_file.readline()
 
-    secular_stables_file.close()
     stables_file.close()
-    fractional_changes_file.close()
+
 
 if __name__ in ('__main__','__plot__'):
 
-    main()
+    #Obtain mass directory
+    m_dir = sys.argv[1]
+    
+    #Evolve
+    evolve_secular_per_mass(m_dir)
+
 
     # start_running_time = time.time()
     #
@@ -282,3 +261,14 @@ if __name__ in ('__main__','__plot__'):
     # print run(end_time, m_star, m_bp, m_ffp, e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp)
     #
     # print '\nRunning time: ', time.time() - start_running_time
+
+
+
+
+
+
+
+
+
+
+
