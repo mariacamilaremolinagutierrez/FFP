@@ -140,6 +140,10 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_f
 
     kep.advance_to_periastron()
     time_pericenter = kep.get_time()
+    
+#    print kepler_bodies
+#    print kep.get_separation_vector()
+#    print time_pericenter
 
     kep.stop()
 
@@ -205,7 +209,7 @@ def evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots):
 
     #Positions and velocities centered on the center of mass
     bodies.move_to_center()
-
+    
     t = 0.0 | nbody_system.time
     dt_snapshots = t_end / float(n_snapshots)
 
@@ -214,58 +218,63 @@ def evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots):
 
     E_initial = gravity.kinetic_energy + gravity.potential_energy
     DeltaE_max = 0.0 | nbody_system.energy
-
-    while (t <= t_end):
-
-        gravity.evolve_model(t)
-        channel_from_gr_to_framework.copy()
-
-        E = gravity.kinetic_energy + gravity.potential_energy
-
-        DeltaE = abs(E-E_initial)
-        if ( DeltaE > DeltaE_max ):
-            DeltaE_max = DeltaE
-
-        t += dt_snapshots
-
-    #Orbital Elements
-    star = bodies[0]
-    ffp = bodies[1]
-    bp = bodies[2]
-
-    #Star+BP and FFP
-    cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
-    cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
-    cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
-    cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
-
-    star_bp = Particles(1)
-    star_bp.mass = star.mass + bp.mass
-    star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
-    star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
-
-    binary = [star_bp[0], ffp]
-    sma_starbp_ffp, e_starbp_ffp, inc_starbp_ffp, lan_starbp_ffp, ap_starbp_ffp = my_orbital_elements_from_binary(binary)
-    bodies[1].eccentricity = e_starbp_ffp
-    bodies[1].semimajoraxis = sma_starbp_ffp
-
-    #Star and BP
-    binary = [star, bp]
-    sma_star_bp, e_star_bp, inc_star_bp, lan_star_bp, ap_star_bp = my_orbital_elements_from_binary(binary)
-    bodies[2].eccentricity = e_star_bp
-    bodies[2].semimajoraxis = sma_star_bp
-
-    is_stable = is_hill_stable(bodies.mass, bodies.semimajoraxis, bodies.eccentricity, converter)
-
-    #Star and FFP
-    binary = [star, ffp]
-    sma_star_ffp, e_star_ffp, inc_star_ffp, lan_star_ffp, ap_star_ffp = my_orbital_elements_from_binary(binary)
-
-    max_energy_change = DeltaE_max/E_initial
-
-    gravity.stop()
-
-    return max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
+    
+    if(t_end != 0.0 | nbody_system.time):
+        
+        while (t <= t_end):
+            
+            gravity.evolve_model(t)
+            channel_from_gr_to_framework.copy()
+    
+            E = gravity.kinetic_energy + gravity.potential_energy
+    
+            DeltaE = abs(E-E_initial)
+            if ( DeltaE > DeltaE_max ):
+                DeltaE_max = DeltaE
+    
+            t += dt_snapshots
+        
+        #Orbital Elements
+        star = bodies[0]
+        ffp = bodies[1]
+        bp = bodies[2]
+    
+        #Star+BP and FFP
+        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
+        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
+        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
+        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+    
+        star_bp = Particles(1)
+        star_bp.mass = star.mass + bp.mass
+        star_bp.position = [cm_x, cm_y, 0.0 | nbody_system.length]
+        star_bp.velocity = [cm_vx, cm_vy, 0.0 | nbody_system.speed]
+    
+        binary = [star_bp[0], ffp]
+        sma_starbp_ffp, e_starbp_ffp, inc_starbp_ffp, lan_starbp_ffp, ap_starbp_ffp = my_orbital_elements_from_binary(binary)
+        bodies[1].eccentricity = e_starbp_ffp
+        bodies[1].semimajoraxis = sma_starbp_ffp
+    
+        #Star and BP
+        binary = [star, bp]
+        sma_star_bp, e_star_bp, inc_star_bp, lan_star_bp, ap_star_bp = my_orbital_elements_from_binary(binary)
+        bodies[2].eccentricity = e_star_bp
+        bodies[2].semimajoraxis = sma_star_bp
+    
+        is_stable = is_hill_stable(bodies.mass, bodies.semimajoraxis, bodies.eccentricity, converter)
+    
+        #Star and FFP
+        binary = [star, ffp]
+        sma_star_ffp, e_star_ffp, inc_star_ffp, lan_star_ffp, ap_star_ffp = my_orbital_elements_from_binary(binary)
+    
+        max_energy_change = DeltaE_max/E_initial
+    
+        gravity.stop()
+    
+        return max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
+    
+    else:
+        return 1.0, False, 0.0, 0.0, 1.0 | nbody_system.length, 1.0 | nbody_system.length, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
 def convert_units(converter, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi_bp_p, inc_bp_p, lan_bp_p):
 
@@ -305,7 +314,7 @@ def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ff
 
     #Particles: star, FFP, planets
     bodies, time_pericenter, orbital_period_bp = get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_ffp, r_inf)
-
+    
     #Evolve time
     t_end = 5.0*time_pericenter
     dt_integration = orbital_period_bp/50.0
@@ -314,5 +323,12 @@ def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ff
     return converter.to_si(t_end).value_in(units.yr), max_energy_change, is_stable, e_star_ffp, e_star_bp, converter.to_si(sma_star_ffp).value_in(units.AU), converter.to_si(sma_star_bp).value_in(units.AU), inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
 
 if __name__ in ('__main__', '__plot__'):
-
-    print run_capture()
+    
+    m=0.1
+    a=6.44444444444 
+    b=-75.1528396747
+    p=55.4986232567
+    i=0.0	
+    l=0.0
+    
+    print run_capture(m_bp_p=m, a_bp_p=a, b_ffp_p=b, phi_bp_p=p, inc_bp_p=i, lan_bp_p=l)

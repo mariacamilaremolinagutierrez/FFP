@@ -2,6 +2,11 @@ import numpy as np
 import os, time, math, sys
 import ffp
 
+def stop_code():
+    print '\nSTOP'
+    import sys
+    sys.exit()
+
 def find_limit_b(r_0, number_r0_in_rinf, mass_ratio):
     return r_0*math.sqrt(( ((1+mass_ratio)**6)/(4.0*(mass_ratio**4)) + ((1+mass_ratio)**3)*math.sqrt( ((1+mass_ratio)**6)/(16.0*(mass_ratio**4)) + number_r0_in_rinf**2 )/(mass_ratio**2) )/2.0)
 
@@ -67,34 +72,37 @@ def permute(m_bp):
 
                         #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
                         if (i>num_runs):
+                            
+#                            print m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
 
                             #status
-                            res = os.system('echo '+str(i)+'/'+str(int(total_permutations))+' >> ./particles/'+m_bp_filename+'/status.txt')
+                            to_write = str(i)+'/'+str(int(total_permutations))+'\t'+str(m_bp)+'\t'+str(a_bp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\t'+str(inc_bp)+'\t'+str(lan_bp)
+                            res = os.system('echo "'+to_write+'" >> ./particles/'+m_bp_filename+'/status.txt')
 
                             #Time starts
                             start_time = time.time()
 
                             #Filename
                             t_end, max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(m0_p=m0,
-                                                                                                                                                                                                                    m_ffp_p=m_ffp,
-                                                                                                                                                                                                                    e_bp_p=e_bp,
-                                                                                                                                                                                                                    m_bp_p=m_bp,
-                                                                                                                                                                                                                    a_bp_p=a_bp,
-                                                                                                                                                                                                                    b_ffp_p=b_ffp,
-                                                                                                                                                                                                                    phi_bp_p=phi_bp,
-                                                                                                                                                                                                                    inc_bp_p=inc_bp,
-                                                                                                                                                                                                                    lan_bp_p=lan_bp,
-                                                                                                                                                                                                                    n_snapshots=n_snapshots,
-                                                                                                                                                                                                                    n_r0_in_rinf=n_r0_in_rinf)
-
+                                                                                                                                                                                                                     m_ffp_p=m_ffp,
+                                                                                                                                                                                                                     e_bp_p=e_bp,
+                                                                                                                                                                                                                     m_bp_p=m_bp,
+                                                                                                                                                                                                                     a_bp_p=a_bp,
+                                                                                                                                                                                                                     b_ffp_p=b_ffp,
+                                                                                                                                                                                                                     phi_bp_p=phi_bp,
+                                                                                                                                                                                                                     inc_bp_p=inc_bp,
+                                                                                                                                                                                                                     lan_bp_p=lan_bp,
+                                                                                                                                                                                                                     n_snapshots=n_snapshots,
+                                                                                                                                                                                                                     n_r0_in_rinf=n_r0_in_rinf)
+                            
                             #Time stops
                             duration = time.time()-start_time
-
+                            
                             #Write in files
                             line = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end)
                             command = 'echo "'+line+'" >> '+filename_parameters
                             os.system(command)
-
+                            
                             if(is_stable):
                                 command = 'echo "'+line+'" >> '+filename_stables
                                 os.system(command)

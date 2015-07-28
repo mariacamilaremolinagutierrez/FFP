@@ -218,9 +218,6 @@ def evolve_secular_per_mass(mass_dir):
         #Save fractional changes in orbital elements
         save_fractional_changes(e_star_bp, e_star_ffp, a_star_bp, a_star_ffp, i_star_bp, i_star_ffp, lan_star_bp, lan_star_ffp, ap_star_bp, ap_star_ffp, e_sb, e_sf, a_sb, a_sf, i_sb, i_sf, lan_sb, lan_sf, ap_sb, ap_sf, filename_fractional_changes)
 
-        if(cont==4):
-            break
-
         cont += 1
 
         line = stables_file.readline()
