@@ -64,6 +64,34 @@ def read_stables_df():
 
     return df, ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp
 
+def create_parameters_and_stables_files():
+
+    os.system('mkdir results/')
+
+    masses_directories = os.listdir('./particles/')
+
+    with open('./results/parameters.txt', 'w') as outfile:
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
+        for i in range(len(masses_directories)):
+            mass_dir = masses_directories[i]
+            fname = './particles/'+mass_dir+'/parameters_'+mass_dir+'.txt'
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+            infile.close()
+    outfile.close()
+
+    with open('./results/stables.txt', 'w') as outfile:
+        outfile.write('m_bp\ta_bp\tb_ffp\tphi_bp\tinc_bp\tlan_bp\te_star_ffp\te_star_bp\tsma_star_ffp\tsma_star_bp\tinc_star_ffp\tinc_star_bp\tlan_star_ffp\tlan_star_bp\tap_star_ffp\tap_star_bp\trun_time\tenergy_change\tintegration_time\n')
+        for i in range(len(masses_directories)):
+            mass_dir = masses_directories[i]
+            fname = './particles/'+mass_dir+'/stables_'+mass_dir+'.txt'
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+            infile.close()
+    outfile.close()
+
 def create_plots_folders():
     os.system('mkdir plots/')
     os.system('mkdir plots/statistics')
@@ -278,6 +306,9 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
 
 
 if __name__ in ('__main__', '__plot__'):
+
+    #Parameters and Stables Files
+    create_parameters_and_stables_files()
 
     #Read df
     df, ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_stables_df()

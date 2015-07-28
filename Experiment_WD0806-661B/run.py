@@ -13,7 +13,7 @@ def permute(m_bp):
     e_bp = 0.0
 
     n_snapshots = 600
-    n_r0_in_rinf = 45.0
+    n_r0_in_rinf = 40.0
     b_limit_fraction = 0.3 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter

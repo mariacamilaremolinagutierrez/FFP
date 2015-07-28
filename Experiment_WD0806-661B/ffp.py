@@ -11,6 +11,11 @@ from amuse.community.smalln.interface import SmallN
 from amuse.community.kepler.interface import Kepler
 from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
+def stop_code():
+    print '\nSTOP'
+    import sys
+    sys.exit()
+
 def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
     """
     initialize gravity code for bodies
@@ -295,11 +300,6 @@ def convert_units(converter, m0_p, m_ffp_p, e_bp_p, m_bp_p, a_bp_p, b_ffp_p, phi
 
     return m0, m_ffp, e_bp, m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
 
-def stop_code():
-    print '\nSTOP'
-    import sys
-    sys.exit()
-
 def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ffp_p=1.0, phi_bp_p=0.0, inc_bp_p=0.0, lan_bp_p=0.0, n_snapshots=600, n_r0_in_rinf=45.0):
     """
     Units: m0_p(MSun), m_ffp_p(MJupiter), e_bp_p(None), m_bp_p(MJupiter), a_bp_p(AU), b_ffp(AU), phi_p(degrees)
@@ -318,7 +318,7 @@ def run_capture(m0_p=0.58, m_ffp_p=7.5, e_bp_p=0.0, m_bp_p=0.1, a_bp_p=1.0, b_ff
 
     #Evolve time
     t_end = 5.0*time_pericenter
-    dt_integration = orbital_period_bp/100.0
+    dt_integration = orbital_period_bp/50.0
     max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = evolve_gravity(bodies, converter, t_end, dt_integration, n_snapshots)
 
     return converter.to_si(t_end).value_in(units.yr), max_energy_change, is_stable, e_star_ffp, e_star_bp, converter.to_si(sma_star_ffp).value_in(units.AU), converter.to_si(sma_star_bp).value_in(units.AU), inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp
