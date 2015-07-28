@@ -79,34 +79,6 @@ def get_ffp_in_orbit(m0, m_ffp, b, r_inf, parabolic_velocity):
 
     return m0_and_ffp_in_orbit
 
-def energies_binaries(bodies, indexA, indexB):
-    """
-    function to calculate energy of a binary (particle set with two particles)
-    """
-
-    labels = ['Star','FFP', 'BP1', 'BP2', 'BP3', 'BP4'] #... temporary
-
-    particleA, particleB = bodies[indexA], bodies[indexB]
-
-    m_A, m_B = particleA.mass, particleB.mass
-
-    v_A = particleA.velocity.value_in(nbody_system.speed)
-    vsquared_A = sum(v_A*v_A) | nbody_system.speed*nbody_system.speed
-    v_B = particleB.velocity.value_in(nbody_system.speed)
-    vsquared_B = sum(v_B*v_B) | nbody_system.speed*nbody_system.speed
-
-    kinetic_energy = (m_A*vsquared_A + m_B*vsquared_B)/2.0
-
-    #distances = (bodies.distances_squared(bodies[0])).sqrt()
-    r_AB = (particleA.position - particleB.position).value_in(nbody_system.length)
-    rmag_AB = math.sqrt(sum(r_AB*r_AB)) | nbody_system.length
-
-    potential_energy = -m_A*m_B/rmag_AB*(1|nbody_system.length**3 * nbody_system.time**(-2) / nbody_system.mass)
-
-    binary_energy = kinetic_energy+potential_energy
-
-    return binary_energy
-
 def save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter):
     #Add attributes that I'm interested in to the bodies_to_save
     bodies_to_save.position = converter.to_si(bodies.position).as_quantity_in(units.AU)
@@ -116,6 +88,33 @@ def save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converte
     bodies_to_save.time = converter.to_si(time).as_quantity_in(units.yr)
 
     write_set_to_file(bodies_to_save, bodies_filename, "hdf5")
+
+def is_hill_stable(m0, m_ffp, m_bp, a_values, e_values):
+
+    M = m0 + m_bp + m_ffp
+    mu = m0 + m_bp
+
+    a_1 = a_values[2]
+    a_2 = a_values[1]
+
+    e_1 = e_values[2]
+    e_2 = e_values[1]
+
+    x = solve_for_x(m0, m_bp, m_ffp)[0]
+
+    f_x = m0*m_bp + (m0*m_ffp)/(1+x) + (m_bp*m_ffp)/(x)
+    g_x = m_bp*m_ffp + m0*m_ffp*(1+x)**2 + m0*m_bp*(x**2)
+
+    A = -(f_x**2)*g_x/(m_ffp**3 * mu**3 * (1-e_2**2))
+    beta = (m0*m_bp/m_ffp)**(3.0/2.0)*(M/(mu**4))**(1.0/2.0)*((1-e_1**2)/(1-e_2**2))**(1.0/2.0)
+    y = ((a_1*m_ffp*mu)/(a_2*m0*m_bp))**(1.0/2.0)
+
+    equation = (1+y**2)*(beta**2*y**2 + 2*beta*y + 1) - A*y**2
+
+    if(equation >= 0.0):
+        return True
+    else:
+        return False
 
 def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snapshots, bodies_filename):
 
@@ -153,12 +152,33 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
         y.append(bodies.y)
         times.append(time)
 
-        #Order: 0_ffp, 0_bp1, 0_bp2, 0_bp3,...
-        for j in range(1,number_of_planets+2):
-            binary = [bodies[0], bodies[j]]
-            m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
-            bodies[j].eccentricity = e
-            bodies[j].semimajoraxis = sma
+        star = bodies[0]
+        ffp = bodies[1]
+        bp = bodies[2]
+
+        #Orbital elements for star and bounded_planet
+        binary = [star, bp]
+        m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+        bodies[2].eccentricity = e
+        bodies[2].semimajoraxis = sma
+
+        #Orbital elements for star+bp and ffp
+        cm_x = (star.mass*star.x + bp.mass*bp.x)/(star.mass+bp.mass)
+        cm_y = (star.mass*star.y + bp.mass*bp.y)/(star.mass+bp.mass)
+        cm_vx = (star.mass*star.vx + bp.mass*bp.vx)/(star.mass+bp.mass)
+        cm_vy = (star.mass*star.vy + bp.mass*bp.vy)/(star.mass+bp.mass)
+        star_bp = Particles(1)
+        star_bp.mass = star.mass + bp.mass
+        star_bp.position = [cm_x, cm_y, 0.0 | units.AU]
+        star_bp.velocity = [cm_vx, cm_vy, 0.0 | units.kms]
+
+        binary = [star_bp, ffp]
+        m1, m2, sma, e, ta, i, lan, ap = orbital_elements_from_binary(binary)
+        bodies[1].eccentricity = e
+        bodies[1].semimajoraxis = sma
+
+        print star.mass, bp.mass, ffp.mass
+        print m1, m2
 
         E = gravity.kinetic_energy + gravity.potential_energy
         system_energies.append(E)
@@ -167,7 +187,7 @@ def evolve_gravity(bodies, number_of_planets, converter, t_end, n_steps, n_snaps
         if ( DeltaE > DeltaE_max ):
             DeltaE_max = DeltaE
 
-        save_particles_to_file(bodies, bodies_to_save, bodies_filename,time,converter)
+        save_particles_to_file(bodies, bodies_to_save, bodies_filename, time, converter)
 
         time += dt_snapshots
 

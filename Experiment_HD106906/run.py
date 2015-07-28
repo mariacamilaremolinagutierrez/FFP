@@ -25,7 +25,7 @@ def permute(m_bp):
 
     #Variable parameters
     as_bp = np.linspace(1.0,50.0,n_as_bp) #AU
-    lans_bp = np.linspace(0.0,180.0,n_lan_bp) #AU
+    lans_bp = np.linspace(0.0,180.0,n_lan_bp) 
     np.random.seed(12)
 
     m_bp_filename = ('m%.4e')%(m_bp)
