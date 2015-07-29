@@ -54,8 +54,9 @@ def permute(m_ffp):
     b_limit_fraction = 1.0 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    n_vs_ffp = 20
-    n_bs_ffp = 10
+    n_vs_ffp = 30
+    n_bs_ffp = 100
+    #this should last 1.5 hours
     
     total_permutations = n_vs_ffp*n_bs_ffp
     

@@ -111,32 +111,16 @@ if __name__ in ('__main__', '__plot__'):
     m_ffp = 1.0
 
     #Parameters and Stables Files
-#    create_parameters_and_stables_files()
+    create_parameters_and_stables_files()
 
     #Read df
     df, ms_ffp, vs_ffp, bs_ffp = read_stables_df()
     df_par, ms_ffp_par, vs_ffp_par, bs_ffp_par = read_parameters_df()
     
     #Plots
-#    create_plots_folders()
+    create_plots_folders()
     #Make statistics plots
     plot_cross_sections_vs_velocity(m_ffp, np.array(vs_ffp), np.array(bs_ffp), np.array(vs_ffp_par), np.array(bs_ffp_par))
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
