@@ -92,10 +92,12 @@ def plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_
         x_axis.append(uniq_vel)
         y_axis.append(log_cs)
         
-    plt.figure()    
+    plt.figure(figsize=(20,10))    
     
     plt.plot(x_axis, y_axis, c='black')
-    plt.scatter(x_axis, y_axis, c='black')
+    plt.scatter(x_axis, y_axis, c='black',s=2)
+    plt.axvline(unique_velocities[0]*2, 0.0, max(y_axis), c='black', linestyle='--', alpha=0.6)
+    plt.xlim(0,unique_velocities[-1]*1.01)
     
     m_ffp_string = r"${0:.3f}$".format(m_ffp)
     
@@ -108,8 +110,6 @@ def plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_
 
 if __name__ in ('__main__', '__plot__'):
     
-    m_ffp = 1.0
-
     #Parameters and Stables Files
     create_parameters_and_stables_files()
 
@@ -117,10 +117,25 @@ if __name__ in ('__main__', '__plot__'):
     df, ms_ffp, vs_ffp, bs_ffp = read_stables_df()
     df_par, ms_ffp_par, vs_ffp_par, bs_ffp_par = read_parameters_df()
     
+    ms_ffp_par_uniq = np.unique(ms_ffp_par)
+    
+    print ms_ffp_par_uniq
+    
+    print 'Stables: ', len(ms_ffp), '/', len(ms_ffp_par)
+    
     #Plots
     create_plots_folders()
+    
     #Make statistics plots
-    plot_cross_sections_vs_velocity(m_ffp, np.array(vs_ffp), np.array(bs_ffp), np.array(vs_ffp_par), np.array(bs_ffp_par))
+    for m_ffp in ms_ffp_par_uniq:
+        
+        vs_ffp_captured = np.array(vs_ffp)[np.where(ms_ffp == m_ffp)]
+        bs_ffp_captured = np.array(bs_ffp)[np.where(ms_ffp == m_ffp)]
+        
+        vs_ffp_total = np.array(vs_ffp_par)[np.where(ms_ffp_par == m_ffp)]
+        bs_ffp_total = np.array(bs_ffp_par)[np.where(ms_ffp_par == m_ffp)]
+        
+        plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_ffp_total, bs_ffp_total)
 
 
 

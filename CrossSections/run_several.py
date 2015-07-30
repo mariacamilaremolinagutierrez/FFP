@@ -14,7 +14,7 @@ if __name__ in ('__main__', '__plot__'):
     #Create file with information of units and order of results    
     info_filename = './info.txt'
     if (os.path.isfile(info_filename) == False):
-        create_info_file()
+        create_info_file(info_filename)
 
     MEarth_in_Mjupiter = 0.0031452 #MJupiter 
     
@@ -27,8 +27,8 @@ if __name__ in ('__main__', '__plot__'):
     
     os.system('mkdir logs/')
 
-#    for m_ffp in ms_ffp:
-#        os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')
+    for m_ffp in ms_ffp:
+        os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')
 
-    m_ffp = 1.0
-    os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')
+#    m_ffp = 1.0
+#    os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')

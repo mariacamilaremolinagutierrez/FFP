@@ -54,9 +54,9 @@ def permute(m_ffp):
     b_limit_fraction = 1.0 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
     #Numbers of each parameter
-    n_vs_ffp = 30
-    n_bs_ffp = 100
-    #this should last 1.5 hours
+    n_vs_ffp = 40
+    n_bs_ffp = 4000
+    #this should last 3.4 days
     
     total_permutations = n_vs_ffp*n_bs_ffp
     
@@ -102,7 +102,7 @@ def permute(m_ffp):
             if (i>num_runs):
                 
                 #status
-                to_write = str(i)+'/'+str(int(total_permutations))+'\t'+str(v_ffp)+'\t'+str(m_ffp)+'\t'+str(b_ffp)+'\t'+str(inc_bp)+'\t'+str(lan_bp)+'\t'+str(phi_bp)
+                to_write = str(i)+'/'+str(int(total_permutations))+'\t'+str(v_ffp)+'\t'+str(m_ffp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\t'+str(inc_bp)+'\t'+str(lan_bp)+'\t'+str(ap_bp)
                 res = os.system('echo "'+to_write+'" >> '+filename_status)
 
                 #Time starts
