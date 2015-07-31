@@ -200,7 +200,7 @@ def evolve_secular_per_mass(mass_dir):
         endtime = integration_time*20.0
         new_integration_time = endtime + integration_time
         
-        to_write = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f')%(cont,endtime,m_bp,e_star_bp,e_star_ffp,a_star_bp,a_star_ffp,i_star_bp,i_star_ffp,lan_star_bp,lan_star_ffp,ap_star_bp,ap_star_ffp)
+        to_write = ('%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f')%(cont,endtime,m_bp,e_star_bp,e_star_ffp,a_star_bp,a_star_ffp,i_star_bp,i_star_ffp,lan_star_bp,lan_star_ffp,ap_star_bp,ap_star_ffp)
         command = 'echo "'+to_write+'" >> '+filename_status
         os.system(command)
         

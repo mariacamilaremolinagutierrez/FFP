@@ -23,9 +23,9 @@ def initialize_code(bodies, code=SmallN, timestep_parameter=0.0169):
 
     return stars_gravity
 
-def get_parabolic_velocity(m0, m_ffp, m_bp, b_ffp, r_inf):
+def get_parabolic_velocity(m0, m_bp, b_ffp, r_inf):
 
-    M = m0 + m_ffp + m_bp
+    M = m0 + m_bp
     r = (r_inf**2 + b_ffp**2).sqrt()
 
     parabolic_velocity_squared = 2.0*M*(1.0 | nbody_system.length**3 * nbody_system.time**-2 * nbody_system.mass**-1)/r
@@ -109,7 +109,7 @@ def get_bodies_in_orbit(m0, m_ffp, m_bp, a_bp, e_bp, phi_bp, inc_bp, lan_bp, b_f
     #Zeros and parabolic velocity
     zero_p = 0.0 | nbody_system.length
     zero_v = 0.0 | nbody_system.speed
-    parabolic_velocity = get_parabolic_velocity(m0, m_ffp, m_bp, b_ffp, r_inf)
+    parabolic_velocity = get_parabolic_velocity(m0, m_bp, b_ffp, r_inf)
     #Central star
     m0_ffp[0].mass = m0
     m0_ffp[0].position = (zero_p,zero_p,zero_p)
