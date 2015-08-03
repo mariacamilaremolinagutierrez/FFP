@@ -1,0 +1,105 @@
+
+---------------------------- SNAPSHOTS = 600 ------------------------------------
+
+t_end = 5037.35259722 time
+dt_integration = 1.06503527952 time
+dt_snapshots = 8.39558766203 time
+
+                 key  eccentricity         mass  semimajoraxis           vx           vy           vz            x            y            z
+                   -         none         mass       length  length / time  length / time  length / time       length       length       length
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+14998489296391716537    1.000e+00    5.800e-01    5.720e+03   -3.548e-04    2.130e-03    0.000e+00    1.700e+00   -5.639e-02    0.000e+00
+ 9384921189477008654    1.000e+00    7.160e-03    5.720e+03    9.058e-02    4.337e-19    0.000e+00   -1.370e+02    4.072e+00    0.000e+00
+11895728974275046793    0.000e+00    3.214e-03    3.467e+00   -1.378e-01   -3.843e-01   -0.000e+00   -1.567e+00    1.105e+00    0.000e+00
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+
+ok 1
+0.0 time antes de evolve
+0.0 time despues de evolve
+8.39558766203 time despues de t++
+8.39558766203 time antes de evolve
+8.39558766203 time despues de evolve
+............................
+1108.21757139 time despues de t++
+1108.21757139 time antes de evolve
+1108.21757139 time despues de evolve
+1116.61315905 time despues de t++
+1116.61315905 time antes de evolve
+...stucked
+
+
+---------------------------- SNAPSHOTS = 800 ------------------------------------
+
+t_end = 5037.35259722 time
+dt_integration = 1.06503527952 time
+dt_snapshots = 6.29669074652 time
+
+                 key  eccentricity         mass  semimajoraxis           vx           vy           vz            x            y            z
+                   -         none         mass       length  length / time  length / time  length / time       length       length       length
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+ 7588502619159724661    1.000e+00    5.800e-01    5.720e+03   -3.548e-04    2.130e-03    0.000e+00    1.700e+00   -5.639e-02    0.000e+00
+  115785500797188169    1.000e+00    7.160e-03    5.720e+03    9.058e-02    4.337e-19    0.000e+00   -1.370e+02    4.072e+00    0.000e+00
+14320860101266707913    0.000e+00    3.214e-03    3.467e+00   -1.378e-01   -3.843e-01   -0.000e+00   -1.567e+00    1.105e+00    0.000e+00
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+
+ok 1
+0.0 time antes de evolve
+0.0 time despues de evolve
+6.29669074652 time despues de t++
+6.29669074652 time antes de evolve
+6.29669074652 time despues de evolve
+............................
+5031.05590647 time despues de t++
+5031.05590647 time antes de evolve
+5031.05590647 time despues de evolve
+5037.35259722 time despues de t++
+5037.35259722 time antes de evolve
+5037.35259722 time despues de evolve
+5043.64928796 time despues de t++
+ok 2
+ok 3
+ok 4
+ok 5
+
+
+---------------------------- SNAPSHOTS = 3000 ------------------------------------
+
+t_end = 5037.35259722 time
+dt_integration = 1.06503527952 time
+dt_snapshots = 1.67911753241 time
+
+bodies:
+                 key  eccentricity         mass  semimajoraxis           vx           vy           vz            x            y            z
+                   -         none         mass       length  length / time  length / time  length / time       length       length       length
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+16792624205081181195    1.000e+00    5.800e-01    5.720e+03   -3.548e-04    2.130e-03    0.000e+00    1.700e+00   -5.639e-02    0.000e+00
+17271297714537283971    1.000e+00    7.160e-03    5.720e+03    9.058e-02    4.337e-19    0.000e+00   -1.370e+02    4.072e+00    0.000e+00
+ 3107891405463285297    0.000e+00    3.214e-03    3.467e+00   -1.378e-01   -3.843e-01   -0.000e+00   -1.567e+00    1.105e+00    0.000e+00
+====================  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========  ===========
+ok 1
+0.0 time antes de evolve
+0.0 time despues de evolve
+1.67911753241 time despues de t++
+1.67911753241 time antes de evolve
+1.67911753241 time despues de evolve
+............................
+5035.67347968 time despues de t++
+5035.67347968 time antes de evolve
+5035.67347968 time despues de evolve
+5037.35259722 time despues de t++
+5037.35259722 time antes de evolve
+5037.35259722 time despues de evolve
+5039.03171475 time despues de t++
+ok 2
+ok 3
+ok 4
+ok 5
+
+
+
+
+
+
+
+
+
