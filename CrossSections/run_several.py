@@ -23,12 +23,7 @@ if __name__ in ('__main__', '__plot__'):
     
     ms_ffp = np.concatenate((ms_ffp_1[:5],ms_ffp_2))
     
-    print ms_ffp
-    
     os.system('mkdir logs/')
 
     for m_ffp in ms_ffp:
         os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')
-
-#    m_ffp = 1.0
-#    os.system('(amuse.sh run.py '+str(m_ffp)+' >> logs/log'+str(m_ffp)+'.txt 2>&1 &)')

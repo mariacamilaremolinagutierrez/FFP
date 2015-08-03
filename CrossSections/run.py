@@ -7,7 +7,7 @@ def stop_code():
     import sys
     sys.exit()
     
-def get_critical_velocity(m0, m_ffp, m_bp, r_inf):
+def get_critical_velocity(m0, m_bp, r_inf):
 
     MJupiter_in_kg = 1.89813e27 #kg
     MSun_in_kg = 1.988435e30 #kg
@@ -55,8 +55,7 @@ def permute(m_ffp):
 
     #Numbers of each parameter
     n_vs_ffp = 40
-    n_bs_ffp = 4000
-    #this should last 3.4 days
+    n_bs_ffp = 500
     
     total_permutations = n_vs_ffp*n_bs_ffp
     
@@ -64,8 +63,8 @@ def permute(m_ffp):
     np.random.seed(12)
 
     #Variable parameters
-    critical_velocity = get_critical_velocity(m0, m_ffp, m_bp, n_r0_in_rinf*a_bp) #km/s
-    vs_ffp_log = 10**(np.linspace(np.log10(0.5*critical_velocity),np.log10(10.0*critical_velocity),n_vs_ffp)) #km/s
+    critical_velocity = get_critical_velocity(m0, m_bp, n_r0_in_rinf*a_bp) #km/s
+    vs_ffp_log = 10**(np.linspace(np.log10(0.8*critical_velocity), np.log10(1.5*critical_velocity), n_vs_ffp)) #km/s
 
     #Filenames to write info
     m_ffp_filename = ('m%.4e')%(m_ffp)

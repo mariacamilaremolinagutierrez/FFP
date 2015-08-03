@@ -68,6 +68,7 @@ def plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_
     
     x_axis = []
     y_axis = []
+    y_axis_errors = []
     
     unique_velocities, number_unique_velocities = np.unique(vs_ffp_total, return_counts=True)
     
@@ -82,31 +83,41 @@ def plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_
         else:
             b_ffp_captured_for_v_max = max(bs_ffp_captured_for_v)
         
-        cs = calculate_cross_section(b_ffp_captured_for_v_max, len(indices_captured[0]), len(indices_total[0]))
+        number_captures = len(indices_captured[0])      
+        number_total = len(indices_total[0])
+        cs = calculate_cross_section(b_ffp_captured_for_v_max, number_captures, number_total)
         
         if(cs != 0.0):
             log_cs = np.log10(cs)
+            log_cs_error = np.log10(cs/np.sqrt(number_captures))
         else:
-            log_cs = 0.0
+            log_cs = -float('Inf') #low negative number
+            log_cs_error = 0.0
             
         x_axis.append(uniq_vel)
         y_axis.append(log_cs)
+        y_axis_errors.append(log_cs_error)
         
-    plt.figure(figsize=(20,10))    
+    figure = plt.figure(figsize=(20,10))    
+    fig = figure.add_subplot(1,1,1)
     
-    plt.plot(x_axis, y_axis, c='black')
-    plt.scatter(x_axis, y_axis, c='black',s=2)
-    plt.axvline(unique_velocities[0]*2, 0.0, max(y_axis), c='black', linestyle='--', alpha=0.6)
-    plt.xlim(0,unique_velocities[-1]*1.01)
+    fig.plot(x_axis, y_axis, c='black', marker='o')
+    #fig.errorbar(x_axis, y_axis, xerr=None, yerr=y_axis_errors, ecolor='black')
+    fig.axvline(unique_velocities[0]*2, 0.0, 6.0, c='black', linestyle='--', alpha=0.6)
+    
+    #fig.set_xlim(unique_velocities[0]*0.9, unique_velocities[-1]*1.01)
+    #fig.set_ylim(-0.5, 5.5)
     
     m_ffp_string = r"${0:.3f}$".format(m_ffp)
     
-    plt.title('$\mathrm{Cross\quad Sections:}\quad m_{FFP}=$'+m_ffp_string+'$\mathrm{\quad (MJupiter)}$')    
-    plt.xlabel('$v_{FFP}\quad \mathrm{(km/s)}$')    
-    plt.ylabel('$\log(\sigma_{capt})$')    
+    fig.set_title('$\mathrm{Cross\quad Sections:}\quad m_{FFP}=$'+m_ffp_string+'$\mathrm{\quad (MJupiter)}$')    
+    fig.set_xlabel('$v_{FFP}\quad \mathrm{(km/s)}$')    
+    fig.set_ylabel('$\log(\sigma_{capt})$')    
     
-    plt.savefig('./plots/cross_sections_'+str(m_ffp)+'.png')
-    plt.close()
+    figure.savefig('./plots/cross_sections_'+str(m_ffp)+'.png')
+    plt.close(figure)
+    
+    return x_axis, y_axis, y_axis_errors
 
 if __name__ in ('__main__', '__plot__'):
     
@@ -119,15 +130,20 @@ if __name__ in ('__main__', '__plot__'):
     
     ms_ffp_par_uniq = np.unique(ms_ffp_par)
     
-    print ms_ffp_par_uniq
-    
     print 'Stables: ', len(ms_ffp), '/', len(ms_ffp_par)
     
     #Plots
     create_plots_folders()
     
     #Make statistics plots
-    for m_ffp in ms_ffp_par_uniq:
+    figure = plt.figure(figsize=(25,15))  
+    fig = figure.add_subplot(1,1,1)
+    markers = [".",">","v","d","s","D","p","H","*","o"]
+    colors=['r','b','g','y','m','c','k','r','b','g']
+    
+    for j in range(len(ms_ffp_par_uniq)):
+        
+        m_ffp = ms_ffp_par_uniq[j]
         
         vs_ffp_captured = np.array(vs_ffp)[np.where(ms_ffp == m_ffp)]
         bs_ffp_captured = np.array(bs_ffp)[np.where(ms_ffp == m_ffp)]
@@ -135,7 +151,21 @@ if __name__ in ('__main__', '__plot__'):
         vs_ffp_total = np.array(vs_ffp_par)[np.where(ms_ffp_par == m_ffp)]
         bs_ffp_total = np.array(bs_ffp_par)[np.where(ms_ffp_par == m_ffp)]
         
-        plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_ffp_total, bs_ffp_total)
+        x_axis, y_axis, y_axis_errors = plot_cross_sections_vs_velocity(m_ffp, vs_ffp_captured, bs_ffp_captured, vs_ffp_total, bs_ffp_total)
+        
+        m_ffp_string = r"${0:.3f}$".format(m_ffp)
+        fig.plot(x_axis, y_axis, c=colors[j], marker=markers[j], label='$m_{FFP}=$'+m_ffp_string+' $\mathrm{(MJupiter)}$')
+        #fig.errorbar(x_axis, y_axis, xerr=None, yerr=y_axis_errors, ecolor=colors[j])
+    
+    fig.axvline(x_axis[0]*2, 0.0, 5.5, c='black', linestyle='--', alpha=0.6)
+#    fig.set_xlim(x_axis[0]*0.9, x_axis[-1]*1.01)
+#    fig.set_ylim(-0.5, 5.5)
+    fig.set_title('$\mathrm{Cross\quad Sections}$')    
+    fig.set_xlabel('$v_{FFP}\quad \mathrm{(km/s)}$')    
+    fig.set_ylabel('$\log(\sigma_{capt})$')    
+    fig.legend()
+    figure.savefig('./plots/cross_sections.png')
+    plt.close(figure)
 
 
 
