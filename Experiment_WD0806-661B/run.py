@@ -17,7 +17,6 @@ def permute(m_bp):
     m_ffp = 7.5 #MJupiter
     e_bp = 0.0
 
-    n_snapshots = 600
     n_r0_in_rinf = 40.0
     b_limit_fraction = 0.3 #number from 0 to 1 that defines how much of the upper and lower limits do I want to take
 
@@ -92,7 +91,6 @@ def permute(m_bp):
                                                                                                                                                                                                                      phi_bp_p=phi_bp,
                                                                                                                                                                                                                      inc_bp_p=inc_bp,
                                                                                                                                                                                                                      lan_bp_p=lan_bp,
-                                                                                                                                                                                                                     n_snapshots=n_snapshots,
                                                                                                                                                                                                                      n_r0_in_rinf=n_r0_in_rinf)
                             
                             #Time stops
