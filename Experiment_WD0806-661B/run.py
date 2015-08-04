@@ -72,8 +72,6 @@ def permute(m_bp):
                         #Check that you don't run the last parameters combination again, it starts on the last one (in case the program has to be restarted)
                         if (i>num_runs):
                             
-#                            print m_bp, a_bp, b_ffp, phi_bp, inc_bp, lan_bp
-
                             #status
                             to_write = str(i)+'/'+str(int(total_permutations))+'\t'+str(m_bp)+'\t'+str(a_bp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\t'+str(inc_bp)+'\t'+str(lan_bp)
                             res = os.system('echo "'+to_write+'" >> ./particles/'+m_bp_filename+'/status.txt')
