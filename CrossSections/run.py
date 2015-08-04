@@ -55,7 +55,7 @@ def permute(m_ffp):
 
     #Numbers of each parameter
     n_vs_ffp = 40
-    n_bs_ffp = 500
+    n_bs_ffp = 1000
     
     total_permutations = n_vs_ffp*n_bs_ffp
     
@@ -64,8 +64,10 @@ def permute(m_ffp):
 
     #Variable parameters
     critical_velocity = get_critical_velocity(m0, m_bp, n_r0_in_rinf*a_bp) #km/s
-    vs_ffp_log = 10**(np.linspace(np.log10(0.8*critical_velocity), np.log10(1.5*critical_velocity), n_vs_ffp)) #km/s
-
+    vs_ffp_log_1 = 10**(np.linspace(np.log10(0.8*critical_velocity), np.log10(0.999*critical_velocity), 3)) #km/s
+    vs_ffp_log_2 = 10**(np.linspace(np.log10(1.001*critical_velocity), np.log10(1.4*critical_velocity), n_vs_ffp-3)) #km/s
+    vs_ffp_log = np.concatenate((vs_ffp_log_1, vs_ffp_log_2)) #km/s
+    
     #Filenames to write info
     m_ffp_filename = ('m%.4e')%(m_ffp)
     filename_parameters = './particles/'+m_ffp_filename+'/parameters_'+m_ffp_filename+'.txt'
