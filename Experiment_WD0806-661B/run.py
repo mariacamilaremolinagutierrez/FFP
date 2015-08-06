@@ -1,5 +1,5 @@
 import numpy as np
-import os, time, math, sys
+import os, time, math, sys, signal
 import ffp
 
 def stop_code():
@@ -9,6 +9,11 @@ def stop_code():
 
 def find_limit_b(r_0, number_r0_in_rinf, mass_ratio):
     return r_0*math.sqrt(( ((1+mass_ratio)**6)/(4.0*(mass_ratio**4)) + ((1+mass_ratio)**3)*math.sqrt( ((1+mass_ratio)**6)/(16.0*(mass_ratio**4)) + number_r0_in_rinf**2 )/(mass_ratio**2) )/2.0)
+    
+# Register an handler for the timeout
+# From http://stackoverflow.com/questions/492519/timeout-on-a-python-function-call
+def handler(signum, frame):
+    raise Exception("-10.0")
 
 def permute(m_bp):
 
@@ -25,7 +30,7 @@ def permute(m_bp):
     n_bs_ffp = 10
     n_incs_bp = 1
     n_lans_bp = 1
-    n_phis_bp = 100
+    n_phis_bp = 500
 
     total_permutations = n_as_bp*n_bs_ffp*n_incs_bp*n_lans_bp*n_phis_bp
 
@@ -63,7 +68,7 @@ def permute(m_bp):
 
                 for lan_bp in lans_bp:
 
-                    np.random.seed(12)
+                    np.random.seed(22)
 
                     for j in range(n_phis_bp):
 
@@ -76,32 +81,40 @@ def permute(m_bp):
                             to_write = str(i)+'/'+str(int(total_permutations))+'\t'+str(m_bp)+'\t'+str(a_bp)+'\t'+str(b_ffp)+'\t'+str(phi_bp)+'\t'+str(inc_bp)+'\t'+str(lan_bp)
                             res = os.system('echo "'+to_write+'" >> ./particles/'+m_bp_filename+'/status.txt')
 
+                            #Start Handler
+                            #Register the signal function handler
+                            signal.signal(signal.SIGALRM, handler)
+                            #Define a timeout for your function
+                            signal.alarm(10)
+                            
                             #Time starts
                             start_time = time.time()
 
-                            #Filename
-                            t_end, max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(m0_p=m0,
-                                                                                                                                                                                                                     m_ffp_p=m_ffp,
-                                                                                                                                                                                                                     e_bp_p=e_bp,
-                                                                                                                                                                                                                     m_bp_p=m_bp,
-                                                                                                                                                                                                                     a_bp_p=a_bp,
-                                                                                                                                                                                                                     b_ffp_p=b_ffp,
-                                                                                                                                                                                                                     phi_bp_p=phi_bp,
-                                                                                                                                                                                                                     inc_bp_p=inc_bp,
-                                                                                                                                                                                                                     lan_bp_p=lan_bp,
-                                                                                                                                                                                                                     n_r0_in_rinf=n_r0_in_rinf)
+                            try:
+                                #Run it
+                                t_end, max_energy_change, is_stable, e_star_ffp, e_star_bp, sma_star_ffp, sma_star_bp, inc_star_ffp, inc_star_bp, lan_star_ffp, lan_star_bp, ap_star_ffp, ap_star_bp = ffp.run_capture(m0_p=m0, m_ffp_p=m_ffp, e_bp_p=e_bp, m_bp_p=m_bp, a_bp_p=a_bp, b_ffp_p=b_ffp, phi_bp_p=phi_bp, inc_bp_p=inc_bp, lan_bp_p=lan_bp, n_r0_in_rinf=n_r0_in_rinf)
                             
-                            #Time stops
-                            duration = time.time()-start_time
-                            
-                            #Write in files
-                            line = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end)
-                            command = 'echo "'+line+'" >> '+filename_parameters
-                            os.system(command)
-                            
-                            if(is_stable):
-                                command = 'echo "'+line+'" >> '+filename_stables
+                                #Time stops
+                                duration = time.time()-start_time
+                                
+                                #Write in files
+                                line = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,e_star_ffp,e_star_bp,sma_star_ffp,sma_star_bp,inc_star_ffp,inc_star_bp,lan_star_ffp,lan_star_bp,ap_star_ffp,ap_star_bp,duration,max_energy_change,t_end)
+                                command = 'echo "'+line+'" >> '+filename_parameters
                                 os.system(command)
+                                
+                                if(is_stable):
+                                    command = 'echo "'+line+'" >> '+filename_stables
+                                    os.system(command)
+                            
+                            #Raised when the program gets stucked -> inestable                            
+                            except Exception, exc: 
+                                #Write in files
+                                line = ('%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%.4f\t%.4e\t%f')%(m_bp,a_bp,b_ffp,phi_bp,inc_bp,lan_bp,10.0,10.0,-1.0,-1.0,0.0,0.0,0.0,0.0,0.0,0.0,-10.0,0.0,0.0)
+                                command = 'echo "'+line+'" >> '+filename_parameters
+                                os.system(command)
+                            
+                            #Cancel the timer if the function returned before timeout
+                            signal.alarm(0)
 
                         #Advance counter
                         i += 1
