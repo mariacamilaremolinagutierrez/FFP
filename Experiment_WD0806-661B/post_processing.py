@@ -120,7 +120,7 @@ def plot_histogram_phi(parameter, df_name):
     parameter = np.array(parameter)
 
     #n,b,p = plt.hist(parameter, bins = int(len(parameter)/3.0), color = 'c')
-    n,b,p = plt.hist(parameter, bins = 10, color = 'c')
+    n,b,p = plt.hist(parameter, bins = 40, color = 'c')
 
     plt.title('Histogram of captures for each '+df_name, fontsize=20)
     plt.xlabel(df_name, fontsize=20)
@@ -235,6 +235,10 @@ def make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp):
     plot_histograms(bs_ffp_over_a_bp, n_bs_ffp_par, 'b_ffp_over_a_bp')
     #phi_bp
     plot_histograms(phis_bp, n_phis_bp_par, 'phi_bp')
+    
+    os.system('mkdir ./plots/statistics/cuts_a')
+    os.system('mkdir ./plots/statistics/cuts_m')
+    os.system('mkdir ./plots/statistics/cuts_b')
 
     for aa in as_bp_par_uniq:
         a_indices = np.where(as_bp == aa)
@@ -305,6 +309,6 @@ if __name__ in ('__main__', '__plot__'):
     df, ms_bp, as_bp, bs_ffp, phis_bp, incs_bp, lans_bp, es_star_bp, es_star_ffp, smas_star_ffp, smas_star_bp, incs_star_ffp, incs_star_bp, lans_star_ffp, lans_star_bp, aps_star_ffp, aps_star_bp = read_stables_df()
 
     #Plottts
-    # create_plots_folders()
+    create_plots_folders()
     #Make statistics plots
     make_statistical_plots(df, ms_bp, as_bp, bs_ffp, phis_bp)
